@@ -83,7 +83,7 @@ class ScreenUtil
 
 		fitMembers(state.members);
 
-		if (!(state is states.substates.ResetScoreSubState) && !(state is states.substates.StoryProgress))
+		if (!(state is states.substates.ResetScoreSubState) && !(state is states.substates.StoryProgress) && !(state is states.menus.WarningState))
 			shiftMembers(state.members, offsetX);
 	}
 
@@ -99,9 +99,13 @@ class ScreenUtil
 				var group:FlxTypedGroup<FlxBasic> = cast member;
 				shiftMembers(group.members, offset);
 			}
-			else if (member is flixel.FlxObject)
+			else if (member is FlxSprite)
 			{
-				var object:flixel.FlxObject = cast member;
+				var object:FlxSprite = cast member;
+				var camera = object.getDefaultCamera();
+				if (object.scrollFactor.x != 0 && camera != null && camera.target != null)
+					continue;
+
 				var left:Float = object.x;
 				var right:Float = object.x + object.width;
 				var centered:Bool = Math.abs(left - (FlxG.width - object.width) / 2) < 2;
