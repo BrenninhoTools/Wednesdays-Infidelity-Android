@@ -26,7 +26,6 @@ import flixel.util.FlxSignal.IFlxSignal;
 import flixel.util.FlxTimer;
 import lime.app.Application;
 import lime.graphics.Image;
-import lime.tools.WindowData;
 import openfl.Lib;
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
@@ -177,8 +176,8 @@ class MainMenuState extends MusicBeatState
 		camAchievement.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camAchievement);
-		FlxCamera.defaultCameras = [camGame];
+		FlxG.cameras.add(camAchievement, false);
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 
 		transIn = FlxTransitionableState.defaultTransIn;
 		transOut = FlxTransitionableState.defaultTransOut;
@@ -263,6 +262,12 @@ class MainMenuState extends MusicBeatState
 		resetText.scrollFactor.set();
 		resetText.setFormat("VCR OSD Mono", 16, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		resetText.x = (FlxG.width - resetText.width) - 12;
+		#if mobile
+		resetText.text = "TAP HERE TO RESET PROGRESS";
+		resetText.size = 24;
+		resetText.x = 12;
+		resetText.y = FlxG.height - resetText.height - 12;
+		#end
 		resetText.visible = Progression.beatMainWeek;
 		resetText.cameras = [camAchievement];
 		add(resetText);
@@ -273,6 +278,8 @@ class MainMenuState extends MusicBeatState
 		changeItem();
 
 		super.create();
+
+		addBackButton();
 	}
 
 	var selectedSomethin:Bool = false;
@@ -304,7 +311,28 @@ class MainMenuState extends MusicBeatState
 				changeItem(1);
 			}
 
-			if (controls.ACCEPT)
+			var accepted:Bool = controls.ACCEPT;
+
+			var tappedItem:Int = mobile.TouchUtil.tappedIndex(menuItems.members);
+			if (tappedItem > -1)
+			{
+				var tappedID:Int = menuItems.members[tappedItem].ID;
+				if (tappedID == curSelected)
+					accepted = true;
+				else
+				{
+					FlxG.sound.play(Paths.sound('scrollMenu'));
+					changeItem(tappedID - curSelected);
+				}
+			}
+
+			if (controls.BACK)
+			{
+				selectedSomethin = true;
+				FlxG.sound.play(Paths.sound('cancelMenu'));
+				MusicBeatState.switchState(new TitleState());
+			}
+			else if (accepted)
 			{
 				if (optionShit[curSelected] == 'discord')
 				{
@@ -364,7 +392,8 @@ class MainMenuState extends MusicBeatState
 			}
 			#end
 			#end
-			if (#if PRIVATE_BUILD true #else Progression.beatMainWeek #end && FlxG.keys.justPressed.DELETE)
+			if (!selectedSomethin
+				&& #if PRIVATE_BUILD true #else Progression.beatMainWeek #end && (FlxG.keys.justPressed.DELETE || mobile.TouchUtil.tappedOn(resetText)))
 			{
 				selectedSomethin = true;
 				openSubState(new ResetScoreSubState(function()
@@ -548,7 +577,7 @@ class MainMenuState extends MusicBeatState
 			newCamEffects.push(new ShaderFilter(i.shader));
 		}
 
-		FlxG.camera.setFilters(newCamEffects);
+		FlxG.camera.filters = newCamEffects;
 	}
 
 	function doChrome(T:FlxTimer, ?setChrom:Bool = true)

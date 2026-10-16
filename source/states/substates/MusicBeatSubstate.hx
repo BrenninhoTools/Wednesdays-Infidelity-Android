@@ -1,6 +1,7 @@
 package states.substates;
 
 import flixel.FlxBasic;
+import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxSubState;
@@ -25,6 +26,37 @@ class MusicBeatSubstate extends FlxSubState
 
 	inline function get_controls():Controls
 		return PlayerSettings.player1.controls;
+
+	public var mobileCamera:FlxCamera;
+	public var backButton:mobile.MobileButton;
+
+	public function addBackButton():mobile.MobileButton
+	{
+		#if mobile
+		if (mobileCamera == null)
+		{
+			mobileCamera = new FlxCamera();
+			mobileCamera.bgColor.alpha = 0;
+			FlxG.cameras.add(mobileCamera, false);
+		}
+
+		backButton = mobile.MobileButton.createBack(this, mobileCamera);
+		add(backButton);
+		#end
+		return backButton;
+	}
+
+	override function destroy()
+	{
+		if (mobileCamera != null)
+		{
+			if (FlxG.cameras.list.contains(mobileCamera))
+				FlxG.cameras.remove(mobileCamera);
+			mobileCamera = null;
+		}
+
+		super.destroy();
+	}
 
 	override function update(elapsed:Float)
 	{

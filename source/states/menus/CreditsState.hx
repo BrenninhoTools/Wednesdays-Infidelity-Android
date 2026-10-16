@@ -303,6 +303,8 @@ class CreditsState extends MusicBeatState
 		intendedColor = bg.color;
 		changeSelection();
 		super.create();
+
+		addBackButton();
 	}
 
 	var quitting:Bool = false;
@@ -350,11 +352,26 @@ class CreditsState extends MusicBeatState
 				}
 			}
 
-			if (controls.ACCEPT)
+			var goBack:Bool = controls.BACK;
+			var accepted:Bool = controls.ACCEPT;
+
+			if (!goBack)
+			{
+				var tappedItem:Int = mobile.TouchUtil.tappedIndex(grpOptions.members);
+				if (tappedItem > -1 && !unselectableCheck(tappedItem))
+				{
+					if (tappedItem == curSelected)
+						accepted = true;
+					else
+						changeSelection(tappedItem - curSelected);
+				}
+			}
+
+			if (accepted && !goBack)
 			{
 				CoolUtil.browserLoad(creditsStuff[curSelected][3]);
 			}
-			if (controls.BACK)
+			if (goBack)
 			{
 				if (colorTween != null)
 				{

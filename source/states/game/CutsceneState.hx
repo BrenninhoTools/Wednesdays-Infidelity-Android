@@ -112,17 +112,20 @@ class CutsceneState extends MusicBeatState // PlayState is alreadly laggy enough
 		var foundFile:Bool = false;
 		var fileName:String = Paths.video(videoName);
 
-		if (FileSystem.exists(fileName))
-		{
-			foundFile = true;
-		}
+		#if mobile
+		fileName = 'videos:' + fileName;
+		foundFile = openfl.utils.Assets.exists(fileName);
+		#else
+		foundFile = FileSystem.exists(fileName);
+		#end
 
 		if (foundFile)
 		{
-			var video = new FlxVideo(fileName, skippable, focus);
+			video = new FlxVideo(fileName, skippable, focus);
 
 			video.finishCallback = function()
 			{
+				video = null;
 				finish();
 			}
 			return;

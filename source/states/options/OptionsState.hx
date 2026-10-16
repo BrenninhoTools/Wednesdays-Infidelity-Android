@@ -63,6 +63,8 @@ class OptionsState extends MusicBeatState
 				LoadingState.loadAndSwitchState(new NoteOffsetState());
 			case 'Accessibility':
 				openSubState(new AccessibilitySubState());
+			case 'Mobile Options':
+				openSubState(new MobileOptionsSubState());
 		}
 		Lib.application.window.title = "Wednesday's Infidelity - Options - " + options[curSelected];
 	}
@@ -77,6 +79,11 @@ class OptionsState extends MusicBeatState
 
 		#if desktop
 		DiscordClient.changePresence("Options Menu", null);
+		#end
+
+		#if mobile
+		options.remove('Controls');
+		options.push('Mobile Options');
 		#end
 
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
@@ -108,6 +115,8 @@ class OptionsState extends MusicBeatState
 
 		super.create();
 
+		addBackButton();
+
 		Lib.application.window.title = "Wednesday's Infidelity - Options";
 	}
 
@@ -131,7 +140,22 @@ class OptionsState extends MusicBeatState
 			changeSelection(1);
 		}
 
-		if (controls.BACK)
+		var goBack:Bool = controls.BACK;
+		var accepted:Bool = controls.ACCEPT;
+
+		if (!goBack && subState == null)
+		{
+			var tappedItem:Int = mobile.TouchUtil.tappedIndex(grpOptions.members);
+			if (tappedItem > -1)
+			{
+				if (tappedItem == curSelected)
+					accepted = true;
+				else
+					changeSelection(tappedItem - curSelected);
+			}
+		}
+
+		if (goBack)
 		{
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 
@@ -140,7 +164,7 @@ class OptionsState extends MusicBeatState
 			MusicBeatState.switchState(new MainMenuState());
 		}
 
-		if (controls.ACCEPT)
+		if (accepted && !goBack)
 		{
 			openSelectedSubstate(options[curSelected]);
 		}

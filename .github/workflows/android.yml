@@ -1,0 +1,96 @@
+name: Android Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Android ARM64
+    runs-on: ubuntu-latest
+    env:
+      HXCPP_COMPILE_CACHE: ${{ github.workspace }}/.hxcpp_cache
+      HXCPP_CACHE_MB: 4000
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Android NDK
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r28c
+          local-cache: true
+
+      - name: Setup Haxe
+        uses: krdlab/setup-haxe@v2
+        with:
+          haxe-version: 4.3.7
+
+      - name: Restore Haxelib Cache
+        id: haxelib-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/haxelib
+          key: haxelib-android-v1-${{ hashFiles('.github/workflows/android.yml') }}
+
+      - name: Install Libraries
+        if: steps.haxelib-cache.outputs.cache-hit != 'true'
+        run: |
+          haxelib setup ~/haxelib
+          curl -sSL -o hxcpp.zip https://github.com/HaxeFoundation/hxcpp/releases/download/v4.3.175/hxcpp-4.3.175.zip
+          haxelib install hxcpp.zip --quiet --always
+          rm hxcpp.zip
+          haxelib install lime 8.3.2 --quiet --always
+          haxelib install openfl 9.5.2 --quiet --always
+          haxelib install flixel 6.2.0 --quiet --always
+          haxelib install flixel-addons 4.0.2 --quiet --always
+          haxelib install flixel-ui 2.6.5 --quiet --always
+          haxelib install hscript 2.7.0 --quiet --always
+          haxelib install flxanimate 4.0.0 --quiet --always
+          haxelib install hxvlc 2.3.1 --quiet --always --skip-dependencies
+
+      - name: Configure Haxelib
+        if: steps.haxelib-cache.outputs.cache-hit == 'true'
+        run: haxelib setup ~/haxelib
+
+      - name: Configure Lime
+        run: |
+          haxelib run lime config ANDROID_SDK $ANDROID_HOME
+          haxelib run lime config ANDROID_NDK_ROOT ${{ steps.ndk.outputs.ndk-path }}
+          haxelib run lime config JAVA_HOME $JAVA_HOME
+          haxelib run lime config ANDROID_SETUP true
+          haxelib list
+
+      - name: Restore Build Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .hxcpp_cache
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: build-android-arm64-${{ github.sha }}
+          restore-keys: |
+            build-android-arm64-
+
+      - name: Build APK
+        run: haxelib run lime build android -arm64 -release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WI-Android-ARM64
+          path: export/release/android/bin/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

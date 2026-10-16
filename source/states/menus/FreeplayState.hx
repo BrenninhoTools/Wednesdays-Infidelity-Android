@@ -12,14 +12,13 @@ import flixel.graphics.FlxGraphic;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
 import flixel.util.FlxTimer;
 import gameObjects.*;
-import lime.tools.LaunchStoryboard;
 import lime.utils.Assets;
 import openfl.Lib;
 import openfl.utils.Assets as OpenFlAssets;
@@ -257,6 +256,8 @@ class FreeplayState extends MusicBeatState
 		daStatic.animation.play('static');
 
 		super.create();
+
+		addBackButton();
 	}
 
 	function genSongs()
@@ -375,6 +376,25 @@ class FreeplayState extends MusicBeatState
 			var accepted = controls.ACCEPT;
 			var space = FlxG.keys.justPressed.SPACE;
 			var ctrl = FlxG.keys.justPressed.CONTROL;
+			var goBack:Bool = controls.BACK;
+			var tappedDiff:Bool = false;
+
+			if (!goBack)
+			{
+				var tappedSong:Int = mobile.TouchUtil.tappedIndex(grpSongs.members);
+				if (tappedSong > -1)
+				{
+					if (tappedSong == curSelected)
+						accepted = true;
+					else
+					{
+						changeSelection(tappedSong - curSelected);
+						changeDiff();
+					}
+				}
+				else if (mobile.TouchUtil.tappedOn(diffText) || mobile.TouchUtil.tappedOn(scoreBG))
+					tappedDiff = true;
+			}
 
 			var shiftMult:Int = 1;
 			if (FlxG.keys.pressed.SHIFT)
@@ -409,13 +429,14 @@ class FreeplayState extends MusicBeatState
 
 			if (controls.UI_LEFT_P)
 				changeDiff(-1);
-			else if (controls.UI_RIGHT_P)
+			else if (controls.UI_RIGHT_P || tappedDiff)
 				changeDiff(1);
 			else if (upP || downP)
 				changeDiff();
 
-			if (controls.BACK)
+			if (goBack)
 			{
+				selectedSomethin = true;
 				persistentUpdate = false;
 				if (colorTween != null)
 				{
@@ -451,7 +472,7 @@ class FreeplayState extends MusicBeatState
 					#end
 				}
 			}
-			else if (accepted)
+			else if (accepted && !goBack)
 			{
 				persistentUpdate = false;
 

@@ -57,6 +57,12 @@ class Init extends FlxState
 
 		FlxG.mouse.visible = false;
 
+		mobile.TouchUtil.init();
+
+		#if android
+		FlxG.android.preventDefaultKeys = [BACK];
+		#end
+
 		#if desktop
 		DiscordClient.initialize();
 		Application.current.onExit.add(function(exitCode)

@@ -81,6 +81,20 @@ class ResetScoreSubState extends MusicBeatSubstate
 
 		if (!selectedsomething)
 		{
+			var touchAccept:Bool = false;
+			if (mobile.TouchUtil.tappedOn(yesText) || mobile.TouchUtil.tappedOn(noText))
+			{
+				var tappedYes:Bool = mobile.TouchUtil.tappedOn(yesText);
+				if (tappedYes == onYes)
+					touchAccept = true;
+				else
+				{
+					FlxG.sound.play(Paths.sound('scrollMenu'), 1);
+					onYes = tappedYes;
+					updateOptions();
+				}
+			}
+
 			if (controls.UI_LEFT_P || controls.UI_RIGHT_P)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'), 1);
@@ -93,7 +107,7 @@ class ResetScoreSubState extends MusicBeatSubstate
 				FlxG.sound.play(Paths.sound('cancelMenu'), 1);
 				fadeOut();
 			}
-			else if (controls.ACCEPT)
+			else if (controls.ACCEPT || touchAccept)
 			{
 				selectedsomething = true;
 				if (onYes)

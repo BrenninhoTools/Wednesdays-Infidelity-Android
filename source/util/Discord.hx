@@ -1,7 +1,9 @@
 package util;
 
+#if DISCORD_ALLOWED
 import Sys.sleep;
 import discord_rpc.DiscordRpc;
+#end
 import states.menus.MainMenuState;
 
 using StringTools;
@@ -10,6 +12,7 @@ class DiscordClient
 {
 	public static var isInitialized:Bool = false;
 
+	#if DISCORD_ALLOWED
 	public function new()
 	{
 		trace("Discord Client starting...");
@@ -88,15 +91,11 @@ class DiscordClient
 
 		// trace('Discord RPC Updated. Arguments: $details, $state, $smallImageKey, $hasStartTimestamp, $endTimestamp');
 	}
+	#else
+	public static function shutdown() {}
 
-	#if LUA_ALLOWED
-	public static function addLuaCallbacks(lua:State)
-	{
-		Lua_helper.add_callback(lua, "changePresence",
-			function(details:String, state:Null<String>, ?smallImageKey:String, ?hasStartTimestamp:Bool, ?endTimestamp:Float)
-			{
-				changePresence(details, state, smallImageKey, hasStartTimestamp, endTimestamp);
-			});
-	}
+	public static function initialize() {}
+
+	public static function changePresence(details:String, state:Null<String>, ?smallImageKey:String, ?hasStartTimestamp:Bool, ?endTimestamp:Float) {}
 	#end
 }

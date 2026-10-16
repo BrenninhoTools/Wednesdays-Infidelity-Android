@@ -21,7 +21,7 @@ import flixel.input.keyboard.FlxKey;
 import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
 import flixel.math.FlxRect;
-import flixel.system.FlxSound;
+import flixel.sound.FlxSound;
 import flixel.text.FlxText;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
@@ -325,6 +325,10 @@ class PlayState extends MusicBeatState
 
 	var spaceBar:FlxSprite;
 
+	public var hitbox:mobile.Hitbox;
+	public var pauseButton:mobile.MobileButton;
+	public var camControls:FlxCamera;
+
 	var dodgeTimers = new FlxTimerManager();
 
 	final dodgingInfo:Map<String, Float> = [
@@ -558,14 +562,19 @@ class PlayState extends MusicBeatState
 		camOther.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camBars);
-		FlxG.cameras.add(camHUD);
-		FlxG.cameras.add(camOther);
+		FlxG.cameras.add(camBars, false);
+		FlxG.cameras.add(camHUD, false);
+		FlxG.cameras.add(camOther, false);
+
+		#if mobile
+		camControls = new FlxCamera();
+		camControls.bgColor.alpha = 0;
+		FlxG.cameras.add(camControls, false);
+		#end
 		grpNoteSplashes = new FlxTypedGroup<NoteSplash>();
 
-		FlxCamera.defaultCameras = [camGame];
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 		CustomFadeTransition.nextCamera = camOther;
-		// FlxG.cameras.setDefaultDrawTarget(camGame, true);
 
 		persistentUpdate = true;
 		persistentDraw = true;
@@ -1015,6 +1024,10 @@ class PlayState extends MusicBeatState
 		});
 
 		devil.anim.addBySymbol("scape", "SATANN", 24, false);
+		devil.anim.onComplete.add(function()
+		{
+			devil.alpha = 0.0001;
+		});
 		devil.antialiasing = true;
 		devil.cameras = [camOther];
 		devil.alpha = 0.0001;
@@ -1361,6 +1374,17 @@ class PlayState extends MusicBeatState
 		#else
 		DiscordClient.changePresence(detailsText, SONG.song, iconP2.getCharacter());
 		#end
+		#end
+
+		#if mobile
+		hitbox = new mobile.Hitbox(camControls, spaceBar != null);
+		hitbox.visible = !cpuControlled;
+		add(hitbox);
+
+		pauseButton = mobile.MobileButton.createPause(this, camControls);
+		if (ClientPrefs.invisiblePauseButton)
+			pauseButton.alpha = 0;
+		add(pauseButton);
 		#end
 
 		if (!ClientPrefs.controllerMode)
@@ -1895,11 +1919,11 @@ class PlayState extends MusicBeatState
 
 		var songName:String = Paths.formatToSongPath(SONG.song);
 		var file:String = Paths.json(songName + '/events');
-		#if sys
+		#if (sys && !mobile)
 		if (FileSystem.exists(file))
 		{
 		#else
-		if (OpenFlAssets.exists(file))
+		if (openfl.utils.Assets.exists(file))
 		{
 		#end
 			var eventsData:Array<Dynamic> = Song.loadFromJson('events', songName).events;
@@ -2354,7 +2378,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if (doingDodge && canDodge && FlxG.keys.anyJustPressed(dodgeKeys) && !_onCoolDown && !cpuControlled && !dodging && !paused)
+		if (doingDodge && canDodge && (FlxG.keys.anyJustPressed(dodgeKeys) || (hitbox != null && hitbox.dodgeJustPressed)) && !_onCoolDown && !cpuControlled && !dodging && !paused)
 		{
 			_onCoolDown = true;
 			dodging = true;
@@ -2505,7 +2529,7 @@ class PlayState extends MusicBeatState
 		}
 		#end
 
-		if (controls.PAUSE && canPause && startedCountdown && !inCutscene)
+		if ((controls.PAUSE || mobilePausePressed()) && canPause && startedCountdown && !inCutscene)
 		{
 			if (isStoryMode)
 				diablo();
@@ -2889,7 +2913,7 @@ class PlayState extends MusicBeatState
 				{
 					newCamEffects.push(new ShaderFilter(i.shader));
 				}
-				camHUD.setFilters(newCamEffects);
+				camHUD.filters = newCamEffects;
 			case 'camother' | 'other':
 				camOtherShaders.push(effect);
 				var newCamEffects:Array<BitmapFilter> = []; // IT SHUTS HAXE UP IDK WHY BUT WHATEVER IDK WHY I CANT JUST ARRAY<SHADERFILTER>
@@ -2897,7 +2921,7 @@ class PlayState extends MusicBeatState
 				{
 					newCamEffects.push(new ShaderFilter(i.shader));
 				}
-				camOther.setFilters(newCamEffects);
+				camOther.filters = newCamEffects;
 			case 'camgame' | 'game':
 				camGameShaders.push(effect);
 				var newCamEffects:Array<BitmapFilter> = []; // IT SHUTS HAXE UP IDK WHY BUT WHATEVER IDK WHY I CANT JUST ARRAY<SHADERFILTER>
@@ -2905,7 +2929,7 @@ class PlayState extends MusicBeatState
 				{
 					newCamEffects.push(new ShaderFilter(i.shader));
 				}
-				camGame.setFilters(newCamEffects);
+				camGame.filters = newCamEffects;
 			default:
 				var OBJ = Reflect.getProperty(PlayState.instance, cam);
 				Reflect.setProperty(OBJ, "shader", effect.shader);
@@ -3968,13 +3992,35 @@ class PlayState extends MusicBeatState
 		});
 	}
 
+	function mobilePausePressed():Bool
+	{
+		#if android
+		if (FlxG.android.justReleased.BACK)
+			return true;
+		#end
+
+		if (pauseButton != null && pauseButton.tapped)
+		{
+			pauseButton.playTap();
+			return true;
+		}
+
+		return false;
+	}
+
 	private function onKeyPress(event:KeyboardEvent):Void
 	{
 		var eventKey:FlxKey = event.keyCode;
 		var key:Int = getKeyFromEvent(eventKey);
 		// trace('Pressed: ' + eventKey);
 
-		if (!cpuControlled && !paused && key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode))
+		if (key > -1 && (FlxG.keys.checkStatus(eventKey, JUST_PRESSED) || ClientPrefs.controllerMode))
+			keyPressed(key);
+	}
+
+	private function keyPressed(key:Int):Void
+	{
+		if (!cpuControlled && !paused && key > -1)
 		{
 			if (!boyfriend.stunned && generatedMusic && !endingSong)
 			{
@@ -4050,7 +4096,11 @@ class PlayState extends MusicBeatState
 	private function onKeyRelease(event:KeyboardEvent):Void
 	{
 		var eventKey:FlxKey = event.keyCode;
-		var key:Int = getKeyFromEvent(eventKey);
+		keyReleased(getKeyFromEvent(eventKey));
+	}
+
+	private function keyReleased(key:Int):Void
+	{
 		if (!cpuControlled && !paused && key > -1)
 		{
 			var spr:StrumNote = playerStrums.members[key];
@@ -4090,6 +4140,17 @@ class PlayState extends MusicBeatState
 		var down = controls.NOTE_DOWN;
 		var left = controls.NOTE_LEFT;
 		var controlHoldArray:Array<Bool> = [left, down, up, right];
+
+		if (hitbox != null)
+		{
+			for (i in 0...4)
+			{
+				if (hitbox.justPressed(i))
+					keyPressed(i);
+				if (hitbox.pressed(i))
+					controlHoldArray[i] = true;
+			}
+		}
 
 		// TO DO: Find a better way to handle controller inputs, this should work for now
 		if (ClientPrefs.controllerMode)
@@ -4151,6 +4212,15 @@ class PlayState extends MusicBeatState
 					if (controlArray[i])
 						onKeyRelease(new KeyboardEvent(KeyboardEvent.KEY_UP, true, true, -1, keysArray[i][0]));
 				}
+			}
+		}
+
+		if (hitbox != null)
+		{
+			for (i in 0...4)
+			{
+				if (hitbox.justReleased(i))
+					keyReleased(i);
 			}
 		}
 	}
@@ -4410,10 +4480,6 @@ class PlayState extends MusicBeatState
 		devil.anim.play('scape', true);
 		devil.alpha = 1;
 		satanLaugh.play(true);
-		devil.anim.onComplete = function()
-		{
-			devil.alpha = 0.0001;
-		}
 	}
 
 	function jump()
@@ -5036,7 +5102,7 @@ class PlayState extends MusicBeatState
 					distort.shader.fullglitch.value = [1];
 
 				case 670:
-					camGame.setFilters([]); // Remove shader
+					camGame.filters = []; // Remove shader
 
 					camGameShaders = [];
 
@@ -5272,8 +5338,13 @@ class PlayState extends MusicBeatState
 
 		var hxdata:String = "";
 
+		#if mobile
+		if (openfl.utils.Assets.exists(path))
+			hxdata = openfl.utils.Assets.getText(path);
+		#else
 		if (FileSystem.exists(path))
 			hxdata = File.getContent(path);
+		#end
 
 		if (hxdata != "")
 		{
@@ -5382,11 +5453,11 @@ class PlayState extends MusicBeatState
 
 	function clearShaders()
 	{
-		camGame.setFilters([]);
+		camGame.filters = [];
 
 		camGameShaders = [];
 
-		camHUD.setFilters([]);
+		camHUD.filters = [];
 
 		camHUDShaders = [];
 	}

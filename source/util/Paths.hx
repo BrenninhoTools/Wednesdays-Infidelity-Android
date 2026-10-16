@@ -229,7 +229,7 @@ class Paths
 
 	static public function getTextFromFile(key:String):String
 	{
-		#if sys
+		#if (sys && !mobile)
 		if (FileSystem.exists(getPreloadPath(key)))
 			return File.getContent(getPreloadPath(key));
 
@@ -315,6 +315,21 @@ class Paths
 
 	public static function returnSound(path:String, key:String, ?library:String)
 	{
+		#if mobile
+		var assetPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
+		if (!OpenFlAssets.exists(assetPath))
+		{
+			var libraryPath:String = getLibraryPathForce('$path/$key.$SOUND_EXT', path);
+			if (OpenFlAssets.exists(libraryPath))
+				assetPath = libraryPath;
+		}
+
+		if (!currentTrackedSounds.exists(assetPath))
+			currentTrackedSounds.set(assetPath, OpenFlAssets.getSound(assetPath));
+		localTrackedAssets.push(key);
+		return currentTrackedSounds.get(assetPath);
+		#end
+
 		var file = null;
 		if (FileSystem.exists(file))
 		{

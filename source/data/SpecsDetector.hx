@@ -30,8 +30,12 @@ class SpecsDetector extends MusicBeatState
 
 	function checkSpecs():Bool
 	{
+		#if mobile
+		return true;
+		#end
+
 		var cpu:Bool = Capabilities.supports64BitProcesses;
-		var ram:UInt64 = CppAPI.obtainRAM();
+		var ram:Int = CppAPI.obtainRAM();
 
 		trace('\n--- SYSTEM INFO ---\nMEMORY AMOUNT: $ram\nCPU 64 BITS: $cpu');
 

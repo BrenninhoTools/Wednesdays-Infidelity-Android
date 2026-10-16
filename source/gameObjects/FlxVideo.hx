@@ -1,29 +1,28 @@
 package gameObjects;
 
-#if web
-import openfl.events.NetStatusEvent;
-import openfl.media.Video;
-import openfl.net.NetConnection;
-import openfl.net.NetStream;
-#else
-import openfl.events.Event;
-#end
 import flixel.FlxBasic;
 import flixel.FlxG;
+import flixel.util.FlxTimer;
 import input.PlayerSettings;
-import vlc.MP4Handler;
+#if VIDEOS_ALLOWED
+import hxvlc.flixel.FlxVideo as VlcVideo;
+#end
 
 class FlxVideo extends FlxBasic
 {
-	#if VIDEOS_ALLOWED
 	public var finishCallback:Void->Void = null;
 
-	#if desktop
-	#end
 	public var skipable:Bool = false;
+
+	#if VIDEOS_ALLOWED
+	var video:VlcVideo;
+	var finished:Bool = false;
+	#end
 
 	public function new(name:String, ?skip:Bool, ?focus:Bool = true)
 	{
+		super();
+
 		#if PRIVATE_BUILD
 		skipable = true;
 		#else
@@ -31,78 +30,95 @@ class FlxVideo extends FlxBasic
 			skipable = skip;
 		#end
 
-		super();
-
-		#if web
-		var player:Video = new Video();
-		player.x = 0;
-		player.y = 0;
-		FlxG.addChildBelowMouse(player);
-		var netConnect = new NetConnection();
-		netConnect.connect(null);
-		var netStream = new NetStream(netConnect);
-		netStream.client = {
-			onMetaData: function()
-			{
-				player.attachNetStream(netStream);
-				player.width = FlxG.width;
-				player.height = FlxG.height;
-			}
-		};
-		netConnect.addEventListener(NetStatusEvent.NET_STATUS, function(event:NetStatusEvent)
+		#if VIDEOS_ALLOWED
+		video = new VlcVideo();
+		video.onEndReached.add(finishVideo);
+		video.onEncounteredError.add(function(message:String)
 		{
-			if (event.info.code == "NetStream.Play.Complete")
-			{
-				netStream.dispose();
-				if (FlxG.game.contains(player))
-					FlxG.game.removeChild(player);
-
-				if (finishCallback != null)
-					finishCallback();
-			}
+			finishVideo();
 		});
-		netStream.play(name);
-		#elseif desktop
-		var video:MP4Handler = new MP4Handler(focus);
-		video.playVideo(name);
-		video.finishCallback = onVLCComplete;
-		video.onError = onVLCError;
-		video.skipable = skipable;
+		FlxG.addChildBelowMouse(video);
+
+		if (video.load(name))
+		{
+			new FlxTimer().start(0.001, function(tmr:FlxTimer)
+			{
+				if (!finished && video != null)
+					video.play();
+			});
+			FlxG.signals.postUpdate.add(checkSkip);
+		}
+		else
+		{
+			new FlxTimer().start(0.001, function(tmr:FlxTimer)
+			{
+				finishVideo();
+			});
+		}
 		#end
 	}
 
-	#if desktop
-	function checkFile(fileName:String):String
+	#if VIDEOS_ALLOWED
+	function checkSkip()
 	{
-		var pDir = "";
-		var appDir = "file:///" + Sys.getCwd() + "/";
+		if (!skipable || finished || video == null || !video.isPlaying)
+			return;
 
-		if (fileName.indexOf(":") == -1) // Not a path
-			pDir = appDir;
-		else if (fileName.indexOf("file://") == -1 || fileName.indexOf("http") == -1) // C:, D: etc? ..missing "file:///" ?
-			pDir = "file:///";
+		var pressed:Bool = PlayerSettings.player1.controls.ACCEPT;
 
-		return pDir + fileName;
+		#if FLX_TOUCH
+		for (touch in FlxG.touches.list)
+		{
+			if (touch.justPressed)
+				pressed = true;
+		}
+		#end
+
+		if (pressed)
+			finishVideo();
 	}
 
-	public function onVLCComplete()
+	function finishVideo()
 	{
-		if (finishCallback != null)
+		if (finished)
+			return;
+
+		finished = true;
+
+		if (FlxG.signals.postUpdate.has(checkSkip))
+			FlxG.signals.postUpdate.remove(checkSkip);
+
+		if (video != null)
 		{
-			finishCallback();
+			video.stop();
+			if (FlxG.game.contains(video))
+				FlxG.removeChild(video);
+			video.dispose();
+			video = null;
 		}
 
-		destroy();
-	}
-
-	function onVLCError()
-	{
-		trace("An error has occured while trying to load the video.\nPlease, check if the file you're loading exists.");
 		if (finishCallback != null)
-		{
 			finishCallback();
-		}
 	}
 	#end
-	#end
+
+	override function destroy()
+	{
+		#if VIDEOS_ALLOWED
+		if (FlxG.signals.postUpdate.has(checkSkip))
+			FlxG.signals.postUpdate.remove(checkSkip);
+
+		if (video != null)
+		{
+			finished = true;
+			video.stop();
+			if (FlxG.game.contains(video))
+				FlxG.removeChild(video);
+			video.dispose();
+			video = null;
+		}
+		#end
+
+		super.destroy();
+	}
 }

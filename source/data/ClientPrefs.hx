@@ -41,10 +41,13 @@ class ClientPrefs
 	public static var badWindow:Int = 135;
 	public static var safeFrames:Float = 10;
 	public static var shaders:Bool = true;
-	public static var intensiveShaders:Bool = true;
+	public static var intensiveShaders:Bool = #if mobile false #else true #end;
 	public static var doNotShowWarnings:Bool = false;
 	public static var hudStyle:String = "Box Funkin";
 	public static var nubMode:Bool = false;
+	public static var invisibleHitbox:Bool = false;
+	public static var invisiblePauseButton:Bool = false;
+	public static var unlockAll:Bool = false;
 
 	// Every key has two binds, add your key bind down here and then add your control on options/ControlsSubState.hx and Controls.hx
 	public static var keyBinds:Map<String, Array<FlxKey>> = [
@@ -115,6 +118,9 @@ class ClientPrefs
 		FlxG.save.data.doNotShowWarnings = doNotShowWarnings;
 		FlxG.save.data.hudStyle = hudStyle;
 		FlxG.save.data.nubMode = nubMode;
+		FlxG.save.data.invisibleHitbox = invisibleHitbox;
+		FlxG.save.data.invisiblePauseButton = invisiblePauseButton;
+		FlxG.save.data.unlockAll = unlockAll;
 
 		FlxG.save.flush();
 
@@ -288,6 +294,21 @@ class ClientPrefs
 		if (FlxG.save.data.nubMode != null)
 		{
 			nubMode = FlxG.save.data.nubMode;
+		}
+
+		if (FlxG.save.data.invisibleHitbox != null)
+		{
+			invisibleHitbox = FlxG.save.data.invisibleHitbox;
+		}
+
+		if (FlxG.save.data.invisiblePauseButton != null)
+		{
+			invisiblePauseButton = FlxG.save.data.invisiblePauseButton;
+		}
+
+		if (FlxG.save.data.unlockAll != null)
+		{
+			unlockAll = FlxG.save.data.unlockAll;
 		}
 
 		if (FlxG.save.data.hudStyle != null)

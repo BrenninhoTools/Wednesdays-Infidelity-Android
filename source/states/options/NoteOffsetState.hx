@@ -3,6 +3,7 @@ package states.options;
 import data.ClientPrefs;
 import flixel.FlxCamera;
 import flixel.FlxG;
+import flixel.FlxObject;
 import flixel.FlxSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.group.FlxSpriteGroup;
@@ -53,10 +54,10 @@ class NoteOffsetState extends MusicBeatState
 		camOther.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camHUD);
-		FlxG.cameras.add(camOther);
+		FlxG.cameras.add(camHUD, false);
+		FlxG.cameras.add(camOther, false);
 
-		FlxCamera.defaultCameras = [camGame];
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 		CustomFadeTransition.nextCamera = camOther;
 		FlxG.camera.scroll.set(120, 130);
 
@@ -158,16 +159,30 @@ class NoteOffsetState extends MusicBeatState
 		changeModeText.scrollFactor.set();
 		changeModeText.cameras = [camHUD];
 		add(changeModeText);
+
+		touchLeftZone = new FlxObject(0, 60, FlxG.width / 3, FlxG.height - 200);
+		touchLeftZone.scrollFactor.set();
+		touchLeftZone.cameras = [camHUD];
+		add(touchLeftZone);
+
+		touchRightZone = new FlxObject(FlxG.width * 2 / 3, 60, FlxG.width / 3, FlxG.height - 200);
+		touchRightZone.scrollFactor.set();
+		touchRightZone.cameras = [camHUD];
+		add(touchRightZone);
 		updateMode();
 
 		Conductor.changeBPM(128.0);
 		FlxG.sound.playMusic(Paths.music('offsetSong'), 1, true);
 
 		super.create();
+
+		addBackButton();
 	}
 
 	var holdTime:Float = 0;
 	var onComboMenu:Bool = true;
+	var touchLeftZone:FlxObject;
+	var touchRightZone:FlxObject;
 	var holdingObjectType:Null<Bool> = null;
 
 	var startMousePos:FlxPoint = new FlxPoint();
@@ -278,26 +293,28 @@ class NoteOffsetState extends MusicBeatState
 		}
 		else
 		{
-			if (controls.UI_LEFT_P)
+			var touchLeft:Bool = mobile.TouchUtil.pressedOn(touchLeftZone, camHUD);
+			var touchRight:Bool = mobile.TouchUtil.pressedOn(touchRightZone, camHUD);
+
+			if (controls.UI_LEFT_P || mobile.TouchUtil.justPressedOn(touchLeftZone, camHUD))
 			{
 				barPercent = Math.max(delayMin, Math.min(ClientPrefs.noteOffset - 1, delayMax));
 				updateNoteDelay();
 			}
-			else if (controls.UI_RIGHT_P)
+			else if (controls.UI_RIGHT_P || mobile.TouchUtil.justPressedOn(touchRightZone, camHUD))
 			{
 				barPercent = Math.max(delayMin, Math.min(ClientPrefs.noteOffset + 1, delayMax));
 				updateNoteDelay();
 			}
 
 			var mult:Int = 1;
-			if (controls.UI_LEFT || controls.UI_RIGHT)
+			if (controls.UI_LEFT || controls.UI_RIGHT || touchLeft || touchRight)
 			{
 				holdTime += elapsed;
-				if (controls.UI_LEFT)
+				if (controls.UI_LEFT || touchLeft)
 					mult = -1;
 			}
-
-			if (controls.UI_LEFT_R || controls.UI_RIGHT_R)
+			else
 				holdTime = 0;
 
 			if (holdTime > 0.5)
@@ -315,13 +332,15 @@ class NoteOffsetState extends MusicBeatState
 			}
 		}
 
-		if (controls.ACCEPT)
+		var goBack:Bool = controls.BACK;
+
+		if (!goBack && (controls.ACCEPT || mobile.TouchUtil.tappedOn(changeModeText, camHUD)))
 		{
 			onComboMenu = !onComboMenu;
 			updateMode();
 		}
 
-		if (controls.BACK)
+		if (goBack)
 		{
 			if (zoomTween != null)
 				zoomTween.cancel();
@@ -452,9 +471,9 @@ class NoteOffsetState extends MusicBeatState
 		beatText.visible = !onComboMenu;
 
 		if (onComboMenu)
-			changeModeText.text = '< Combo Offset (Press Accept to Switch) >';
+			changeModeText.text = #if mobile '< Combo Offset (Tap here to Switch) >' #else '< Combo Offset (Press Accept to Switch) >' #end;
 		else
-			changeModeText.text = '< Note/Beat Delay (Press Accept to Switch) >';
+			changeModeText.text = #if mobile '< Note/Beat Delay (Tap here to Switch) >' #else '< Note/Beat Delay (Press Accept to Switch) >' #end;
 
 		changeModeText.text = changeModeText.text.toUpperCase();
 		FlxG.mouse.visible = onComboMenu;

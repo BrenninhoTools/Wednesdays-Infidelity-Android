@@ -1,6 +1,7 @@
 package data;
 
 import flixel.FlxG;
+import states.menus.StoryMenuState;
 
 class Progression
 {
@@ -46,8 +47,60 @@ class Progression
 		FlxG.save.flush();
 	}
 
+	public static function unlockAll()
+	{
+		if (FlxG.save.data.lockedProgressBackup == null)
+		{
+			var weeks:Map<String, Bool> = new Map<String, Bool>();
+			for (week => completed in StoryMenuState.weekCompleted)
+				weeks.set(week, completed);
+
+			FlxG.save.data.lockedProgressBackup = {
+				beatMainWeek: beatMainWeek,
+				badEnding: badEnding,
+				goodEnding: goodEnding,
+				beatHell: beatHell,
+				weekCompleted: weeks
+			};
+		}
+
+		beatMainWeek = true;
+		badEnding = true;
+		goodEnding = true;
+		beatHell = true;
+
+		WeekData.reloadWeekFiles(true);
+		for (week in WeekData.weeksList)
+			StoryMenuState.weekCompleted.set(week, true);
+
+		FlxG.save.data.weekCompleted = StoryMenuState.weekCompleted;
+		save();
+	}
+
+	public static function restoreLocked()
+	{
+		var backup:Dynamic = FlxG.save.data.lockedProgressBackup;
+		if (backup == null)
+			return;
+
+		beatMainWeek = backup.beatMainWeek == true;
+		badEnding = backup.badEnding == true;
+		goodEnding = backup.goodEnding == true;
+		beatHell = backup.beatHell == true;
+
+		var weeks:Map<String, Bool> = backup.weekCompleted;
+		StoryMenuState.weekCompleted = weeks != null ? weeks : new Map<String, Bool>();
+		FlxG.save.data.weekCompleted = StoryMenuState.weekCompleted;
+		FlxG.save.data.lockedProgressBackup = null;
+		save();
+	}
+
 	public static function reset()
 	{
+		FlxG.save.data.lockedProgressBackup = null;
+		ClientPrefs.unlockAll = false;
+		FlxG.save.data.unlockAll = false;
+
 		beatMainWeek = false;
 		badEnding = false;
 		goodEnding = false;

@@ -22,7 +22,6 @@ import flixel.animation.FlxAnimation;
 import flixel.graphics.FlxGraphic;
 import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.input.keyboard.FlxKey;
-import flixel.system.debug.interaction.tools.Pointer.GraphicCursorCross;
 import flixel.text.FlxText;
 import flixel.ui.FlxButton;
 import flixel.ui.FlxSpriteButton;
@@ -97,9 +96,9 @@ class CharacterEditorState extends MusicBeatState
 		camMenu.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camEditor);
-		FlxG.cameras.add(camHUD);
-		FlxG.cameras.add(camMenu);
-		FlxCamera.defaultCameras = [camEditor];
+		FlxG.cameras.add(camHUD, false);
+		FlxG.cameras.add(camMenu, false);
+		FlxG.cameras.setDefaultDrawTarget(camEditor, true);
 
 		bgLayer = new FlxTypedGroup<FlxSprite>();
 		add(bgLayer);
@@ -112,9 +111,10 @@ class CharacterEditorState extends MusicBeatState
 		bf.visible = false;
 		add(bf);
 
-		var pointer:FlxGraphic = FlxGraphic.fromClass(GraphicCursorCross);
-		cameraFollowPointer = new FlxSprite().loadGraphic(pointer);
-		cameraFollowPointer.setGraphicSize(40, 40);
+		cameraFollowPointer = new FlxSprite().makeGraphic(40, 40, FlxColor.TRANSPARENT, true);
+		cameraFollowPointer.pixels.fillRect(new openfl.geom.Rectangle(18, 0, 4, 40), FlxColor.WHITE);
+		cameraFollowPointer.pixels.fillRect(new openfl.geom.Rectangle(0, 18, 40, 4), FlxColor.WHITE);
+		cameraFollowPointer.dirty = true;
 		cameraFollowPointer.updateHitbox();
 		cameraFollowPointer.color = FlxColor.WHITE;
 		add(cameraFollowPointer);

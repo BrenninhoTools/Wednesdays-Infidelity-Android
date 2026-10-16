@@ -66,7 +66,7 @@ class WarningState extends MusicBeatState
 		camHUD.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camHUD);
+		FlxG.cameras.add(camHUD, false);
 
 		camFollow = new FlxPoint((FlxG.width / 2), (FlxG.height / 2));
 		camFollowPos = new FlxObject((FlxG.width / 2), (FlxG.height / 2), 1, 1);
@@ -167,7 +167,11 @@ class WarningState extends MusicBeatState
 
 		var text:FlxText = new FlxText(560 + 700, 650, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		#if mobile
+		text.applyMarkup("Tap $HERE$ to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
+		#else
 		text.applyMarkup("Press $SPACE$ to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
+		#end
 		text.cameras = [camHUD];
 		add(text);
 
@@ -320,7 +324,19 @@ class WarningState extends MusicBeatState
 			if (controls.UI_DOWN_P)
 				changeSelection(1);
 
-			if (FlxG.keys.justPressed.ENTER)
+			var toggleOption:Bool = FlxG.keys.justPressed.ENTER;
+
+			var tappedOption:Int = mobile.TouchUtil.tappedIndex(grpOptions.members);
+			if (tappedOption < 0)
+				tappedOption = mobile.TouchUtil.tappedIndex(checkboxGroup.members);
+			if (tappedOption > -1)
+			{
+				if (tappedOption != curSelected)
+					changeSelection(tappedOption - curSelected);
+				toggleOption = true;
+			}
+
+			if (toggleOption)
 			{
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				curOption.setValue((curOption.getValue() == true) ? false : true);
@@ -328,7 +344,7 @@ class WarningState extends MusicBeatState
 				reloadCheckboxes();
 			}
 
-			if (FlxG.keys.justPressed.SPACE && canPressSpace)
+			if ((FlxG.keys.justPressed.SPACE || mobile.TouchUtil.tappedOn(infoTexts[1])) && canPressSpace)
 			{
 				canMove = false;
 

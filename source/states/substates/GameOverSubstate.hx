@@ -48,6 +48,8 @@ class GameOverSubstate extends MusicBeatSubstate
 
 		super.create();
 		Lib.application.window.title = "Wednesday's Infidelity - GAME OVER";
+
+		addBackButton();
 	}
 
 	public function new(x:Float, y:Float, camX:Float, camY:Float)
@@ -91,12 +93,14 @@ class GameOverSubstate extends MusicBeatSubstate
 			camFollowPos.setPosition(FlxMath.lerp(camFollowPos.x, camFollow.x, lerpVal), FlxMath.lerp(camFollowPos.y, camFollow.y, lerpVal));
 		}
 
-		if (controls.ACCEPT)
+		var goBack:Bool = controls.BACK;
+
+		if (!goBack && (controls.ACCEPT || mobile.TouchUtil.tapped))
 		{
 			endBullshit();
 		}
 
-		if (controls.BACK)
+		if (goBack && !isEnding)
 		{
 			Lib.application.window.title = "Wednesday's Infidelity";
 			FlxG.sound.music.stop();

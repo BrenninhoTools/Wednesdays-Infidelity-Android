@@ -26,7 +26,6 @@ import flixel.util.FlxSignal.IFlxSignal;
 import flixel.util.FlxTimer;
 import lime.app.Application;
 import lime.graphics.Image;
-import lime.tools.WindowData;
 import openfl.Lib;
 import openfl.filters.BitmapFilter;
 import openfl.filters.ShaderFilter;
@@ -66,7 +65,7 @@ class UnfinishedState extends MusicBeatState
 		warnText.y -= 230;
 
 		var warnText2:FlxText = new FlxText(0, 850, FlxG.width,
-			"The mod has been leaked twice, the most recent being this monday where a member of the team had an anger attack and leaked a video of the new unfinished content of the mod, because of this we had to speed up the process and get it out quickly this wednesday. it will later receive a patch of the missing content, for now it will be receiving fixes in bugs and defective mechanics. \n\n\n\nPress Enter to Continue",
+			"The mod has been leaked twice, the most recent being this monday where a member of the team had an anger attack and leaked a video of the new unfinished content of the mod, because of this we had to speed up the process and get it out quickly this wednesday. it will later receive a patch of the missing content, for now it will be receiving fixes in bugs and defective mechanics. \n\n\n\n" + #if mobile "Tap to Continue" #else "Press Enter to Continue" #end,
 			21);
 
 		warnText2.setFormat("VCR OSD Mono", 35, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
@@ -89,7 +88,7 @@ class UnfinishedState extends MusicBeatState
 	{
 		super.update(elapsed);
 
-		if (canPress && (FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER))
+		if (canPress && (FlxG.keys.justPressed.SPACE || FlxG.keys.justPressed.ENTER || mobile.TouchUtil.tapped))
 		{
 			canPress = false;
 

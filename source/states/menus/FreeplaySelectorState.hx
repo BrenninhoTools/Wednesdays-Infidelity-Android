@@ -66,8 +66,8 @@ class FreeplaySelectorState extends MusicBeatState
 		camAchievement.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);
-		FlxG.cameras.add(camAchievement);
-		FlxCamera.defaultCameras = [camGame];
+		FlxG.cameras.add(camAchievement, false);
+		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 
 		transIn = FlxTransitionableState.defaultTransIn;
 		transOut = FlxTransitionableState.defaultTransOut;
@@ -115,6 +115,8 @@ class FreeplaySelectorState extends MusicBeatState
 		changeItem();
 
 		super.create();
+
+		addBackButton();
 	}
 
 	var selectedSomethin:Bool = false;
@@ -139,10 +141,28 @@ class FreeplaySelectorState extends MusicBeatState
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changeItem(-1);
 			}
-			if (controls.BACK)
+			var goBack:Bool = controls.BACK;
+			var accepted:Bool = controls.ACCEPT;
+
+			if (goBack)
 			{
+				selectedSomethin = true;
 				FlxG.sound.play(Paths.sound('cancelMenu'));
 				MusicBeatState.switchState(new MainMenuState());
+				return;
+			}
+
+			var tappedItem:Int = mobile.TouchUtil.tappedIndex(menuItems.members);
+			if (tappedItem > -1)
+			{
+				var tappedID:Int = menuItems.members[tappedItem].ID;
+				if (tappedID == curSelected)
+					accepted = true;
+				else
+				{
+					FlxG.sound.play(Paths.sound('scrollMenu'));
+					changeItem(tappedID - curSelected);
+				}
 			}
 
 			if (controls.UI_DOWN_P)
@@ -151,7 +171,7 @@ class FreeplaySelectorState extends MusicBeatState
 				changeItem(1);
 			}
 
-			if (controls.ACCEPT)
+			if (accepted)
 			{
 				selectedSomethin = true;
 				FlxG.sound.play(Paths.sound('confirmMenu'));

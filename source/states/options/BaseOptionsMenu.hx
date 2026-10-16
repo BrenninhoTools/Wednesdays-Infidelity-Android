@@ -133,6 +133,8 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
 		changeSelection();
 		reloadCheckboxes();
+
+		addBackButton();
 	}
 
 	public function addOption(option:Option)
@@ -157,13 +159,56 @@ class BaseOptionsMenu extends MusicBeatSubstate
 			changeSelection(1);
 		}
 
-		if (controls.BACK)
+		var goBack:Bool = controls.BACK;
+
+		if (goBack)
 		{
 			close();
 			FlxG.sound.play(Paths.sound('cancelMenu'));
 		}
 
-		if (nextAccept <= 0)
+		var touchActivate:Bool = false;
+
+		if (!goBack && nextAccept <= 0)
+		{
+			var tappedOption:Int = mobile.TouchUtil.tappedIndex(grpOptions.members);
+			var tappedCheckbox:Bool = false;
+
+			if (tappedOption < 0)
+			{
+				for (checkbox in checkboxGroup)
+				{
+					if (checkbox != null && checkbox.visible && mobile.TouchUtil.tappedOn(checkbox))
+					{
+						tappedOption = checkbox.ID;
+						tappedCheckbox = true;
+						break;
+					}
+				}
+			}
+
+			if (tappedOption < 0)
+			{
+				for (text in grpTexts)
+				{
+					if (text != null && text.visible && mobile.TouchUtil.tappedOn(text))
+					{
+						tappedOption = text.ID;
+						break;
+					}
+				}
+			}
+
+			if (tappedOption > -1)
+			{
+				var wasSelected:Bool = tappedOption == curSelected;
+				if (!wasSelected)
+					changeSelection(tappedOption - curSelected);
+				touchActivate = wasSelected || tappedCheckbox;
+			}
+		}
+
+		if (!goBack && nextAccept <= 0)
 		{
 			var usesCheckbox = true;
 			if (curOption.type != 'bool')
@@ -173,7 +218,7 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
 			if (usesCheckbox)
 			{
-				if (controls.ACCEPT)
+				if (controls.ACCEPT || touchActivate)
 				{
 					FlxG.sound.play(Paths.sound('scrollMenu'));
 					curOption.setValue((curOption.getValue() == true) ? false : true);
@@ -183,7 +228,11 @@ class BaseOptionsMenu extends MusicBeatSubstate
 			}
 			else
 			{
-				if (controls.UI_LEFT || controls.UI_RIGHT)
+				if (touchActivate)
+				{
+					stepOption(1);
+				}
+				else if (controls.UI_LEFT || controls.UI_RIGHT)
 				{
 					var pressed = (controls.UI_LEFT_P || controls.UI_RIGHT_P);
 					if (holdTime > 0.5 || pressed)
@@ -304,6 +353,38 @@ class BaseOptionsMenu extends MusicBeatSubstate
 			nextAccept -= 1;
 		}
 		super.update(elapsed);
+	}
+
+	function stepOption(direction:Int)
+	{
+		switch (curOption.type)
+		{
+			case 'int' | 'float' | 'percent':
+				var value:Float = curOption.getValue() + curOption.changeValue * direction;
+				if (value > curOption.maxValue)
+					value = curOption.minValue;
+				else if (value < curOption.minValue)
+					value = curOption.maxValue;
+
+				if (curOption.type == 'int')
+					curOption.setValue(Math.round(value));
+				else
+					curOption.setValue(FlxMath.roundDecimal(value, curOption.decimals));
+
+			case 'string':
+				var num:Int = curOption.curOption + direction;
+				if (num < 0)
+					num = curOption.options.length - 1;
+				else if (num >= curOption.options.length)
+					num = 0;
+
+				curOption.curOption = num;
+				curOption.setValue(curOption.options[num]);
+		}
+
+		updateTextFrom(curOption);
+		curOption.change();
+		FlxG.sound.play(Paths.sound('scrollMenu'));
 	}
 
 	function updateTextFrom(option:Option)
