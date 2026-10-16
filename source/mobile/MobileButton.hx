@@ -20,10 +20,8 @@ class MobileButton extends FlxSprite
 		super(x, y);
 
 		frames = Paths.getSparrowAtlas('mobile/' + image, 'shared');
-		animation.addByPrefix('tap', prefix, 24, false);
+		animation.addByPrefix('tap', prefix, 24, true);
 		animation.play('tap', true);
-		animation.pause();
-		animation.curAnim.curFrame = 0;
 		animName = 'tap';
 		antialiasing = data.ClientPrefs.globalAntialiasing;
 		scrollFactor.set();

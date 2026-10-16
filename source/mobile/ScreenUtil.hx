@@ -7,6 +7,8 @@ class WideScaleMode extends RatioScaleMode
 {
 	public var wide:Bool;
 
+	var targetWidth:Int = ScreenUtil.BASE_WIDTH;
+
 	public function new(wide:Bool)
 	{
 		super();
@@ -15,8 +17,14 @@ class WideScaleMode extends RatioScaleMode
 
 	override public function onMeasure(width:Int, height:Int):Void
 	{
-		ScreenUtil.resizeGame(ScreenUtil.getGameWidth(wide, width, height));
+		targetWidth = ScreenUtil.getGameWidth(wide, width, height);
+		ScreenUtil.resizeCameras(targetWidth);
 		super.onMeasure(width, height);
+	}
+
+	override function setGlobalSize(width:Int, height:Int):Void
+	{
+		super.setGlobalSize(targetWidth, height);
 	}
 }
 
@@ -37,15 +45,12 @@ class ScreenUtil
 		return Std.int(Math.min(Math.ceil(BASE_HEIGHT * ratio), BASE_HEIGHT * 2.4));
 	}
 
-	public static function resizeGame(newWidth:Int)
+	public static function resizeCameras(newWidth:Int)
 	{
 		if (FlxG.width == newWidth)
 			return;
 
 		var oldWidth:Int = FlxG.width;
-
-		@:privateAccess
-		FlxG.width = newWidth;
 
 		for (camera in FlxG.cameras.list)
 		{
