@@ -359,9 +359,10 @@ class Paths
 		var assetPath:String = getPath('$path/$key.$SOUND_EXT', SOUND, library);
 		if (!OpenFlAssets.exists(assetPath))
 		{
-			var libraryPath:String = getLibraryPathForce('$path/$key.$SOUND_EXT', path);
-			if (OpenFlAssets.exists(libraryPath))
-				assetPath = libraryPath;
+			var libraryPath:String = '$path:assets/$path/$key.$SOUND_EXT';
+			if (!OpenFlAssets.exists(libraryPath))
+				return null;
+			assetPath = libraryPath;
 		}
 
 		if (!currentTrackedSounds.exists(assetPath))
