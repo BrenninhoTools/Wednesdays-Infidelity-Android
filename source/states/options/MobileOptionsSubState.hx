@@ -15,6 +15,11 @@ class MobileOptionsSubState extends BaseOptionsMenu
 			'hitboxMode', 'string', 'Four Lanes', ['Four Lanes', 'Arrows']);
 		addOption(option);
 
+		var option:Option = new Option('Screen Style', 'Original keeps the 16:9 screen with black borders.\nFull fills the whole screen without stretching. Restart the game to apply.',
+			'screenStyle', 'string', 'Original', ['Original', 'Full']);
+		option.onChange = onChangeScreenStyle;
+		addOption(option);
+
 		var option:Option = new Option('Invisible Hitbox', 'If checked, the hitbox lanes stay invisible while you play.', 'invisibleHitbox', 'bool', false);
 		addOption(option);
 
@@ -28,6 +33,12 @@ class MobileOptionsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		super();
+	}
+
+	function onChangeScreenStyle()
+	{
+		ClientPrefs.saveSettings();
+		mobile.ScreenUtil.apply(ClientPrefs.screenStyle == 'Full');
 	}
 
 	function onChangeUnlockAll()

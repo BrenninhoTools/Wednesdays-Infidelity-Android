@@ -2376,26 +2376,18 @@ class PlayState extends MusicBeatState
 	{
 		if (generatedMusic && (isCameraOnForcedPos && followChars))
 		{
-			if (bfsection
-				&& (boyfriend.animation.curAnim.name == null
-					|| (StringTools.contains(boyfriend.animation.curAnim.name, "idle")
-						|| StringTools.contains(boyfriend.animation.curAnim.name, "miss"))))
+			var bfAnim:String = (boyfriend != null && boyfriend.animation.curAnim != null) ? boyfriend.animation.curAnim.name : null;
+			var dadAnim:String = (dad != null && dad.animation.curAnim != null) ? dad.animation.curAnim.name : null;
+			var section = SONG.notes[Math.floor(curStep / 16)];
+			var gfSection:Bool = section != null && section.gfSection;
+
+			if (bfsection && (bfAnim == null || StringTools.contains(bfAnim, "idle") || StringTools.contains(bfAnim, "miss")))
 			{
 				isCameraOnForcedPos = false;
 				moveCameraSection(Std.int(curStep / 16));
 			}
 
-			if (!bfsection
-				&& ((dad.animation.curAnim.name == null || StringTools.contains(dad.animation.curAnim.name, "idle"))
-					&& !SONG.notes[Math.floor(curStep / 16)].gfSection))
-			{
-				isCameraOnForcedPos = false;
-				moveCameraSection(Std.int(curStep / 16));
-			}
-
-			if (!bfsection
-				&& ((dad.animation.curAnim.name == null || StringTools.contains(dad.animation.curAnim.name, "idle"))
-					&& !SONG.notes[Math.floor(curStep / 16)].gfSection))
+			if (!bfsection && (dadAnim == null || StringTools.contains(dadAnim, "idle")) && !gfSection)
 			{
 				isCameraOnForcedPos = false;
 				moveCameraSection(Std.int(curStep / 16));

@@ -49,6 +49,7 @@ class ClientPrefs
 	public static var invisiblePauseButton:Bool = false;
 	public static var unlockAll:Bool = false;
 	public static var hitboxMode:String = 'Four Lanes';
+	public static var screenStyle:String = 'Original';
 
 	// Every key has two binds, add your key bind down here and then add your control on options/ControlsSubState.hx and Controls.hx
 	public static var keyBinds:Map<String, Array<FlxKey>> = [
@@ -123,6 +124,7 @@ class ClientPrefs
 		FlxG.save.data.invisiblePauseButton = invisiblePauseButton;
 		FlxG.save.data.unlockAll = unlockAll;
 		FlxG.save.data.hitboxMode = hitboxMode;
+		FlxG.save.data.screenStyle = screenStyle;
 
 		FlxG.save.flush();
 
@@ -316,6 +318,11 @@ class ClientPrefs
 		if (FlxG.save.data.hitboxMode != null)
 		{
 			hitboxMode = FlxG.save.data.hitboxMode;
+		}
+
+		if (FlxG.save.data.screenStyle != null)
+		{
+			screenStyle = FlxG.save.data.screenStyle;
 		}
 
 		if (FlxG.save.data.hudStyle != null)

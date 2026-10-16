@@ -102,6 +102,12 @@ class Main extends Sprite
 		initialState = WarningState;
 		#end
 
+		#if mobile
+		var fullScreen:Bool = mobile.ScreenUtil.isFull();
+		mobile.ScreenUtil.apply(fullScreen);
+		gameWidth = mobile.ScreenUtil.getGameWidth(fullScreen);
+		#end
+
 		addChild(new FlxGame(gameWidth, gameHeight, Init, framerate, framerate, skipSplash, startFullscreen));
 
 		fpsVar = new FPS(10, 5, 0xFFFFFF);
