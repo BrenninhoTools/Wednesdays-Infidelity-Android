@@ -48,6 +48,10 @@ class Init extends FlxState
 		FlxG.save.bind('funkin', 'ninjamuffin99');
 		ClientPrefs.loadPrefs();
 
+		#if mobile
+		mobile.ScreenUtil.apply(ClientPrefs.screenStyle == 'Full');
+		#end
+
 		Highscore.load();
 
 		if (FlxG.save.data.weekCompleted != null)

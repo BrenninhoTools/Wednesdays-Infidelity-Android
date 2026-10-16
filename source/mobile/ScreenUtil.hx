@@ -1,61 +1,69 @@
 package mobile;
 
-import flixel.util.FlxSave;
+import flixel.FlxG;
+import flixel.system.scaleModes.RatioScaleMode;
+
+class WideScaleMode extends RatioScaleMode
+{
+	public var wide:Bool;
+
+	public function new(wide:Bool)
+	{
+		super();
+		this.wide = wide;
+	}
+
+	override public function onMeasure(width:Int, height:Int):Void
+	{
+		ScreenUtil.resizeGame(ScreenUtil.getGameWidth(wide, width, height));
+		super.onMeasure(width, height);
+	}
+}
 
 class ScreenUtil
 {
 	public static inline var BASE_WIDTH:Int = 1280;
 	public static inline var BASE_HEIGHT:Int = 720;
 
-	public static function isFull():Bool
+	public static function getGameWidth(wide:Bool, stageWidth:Int, stageHeight:Int):Int
 	{
-		#if mobile
-		var save:FlxSave = new FlxSave();
-		save.bind('funkin', 'ninjamuffin99');
-		var full:Bool = save.data.screenStyle == 'Full';
-		save.destroy();
-		return full;
-		#else
-		return false;
-		#end
-	}
-
-	public static function getGameWidth(full:Bool):Int
-	{
-		if (!full)
+		if (!wide || stageWidth <= 0 || stageHeight <= 0)
 			return BASE_WIDTH;
 
-		var ratio:Float = getAspectRatio();
+		var ratio:Float = Math.max(stageWidth, stageHeight) / Math.min(stageWidth, stageHeight);
 		if (ratio <= BASE_WIDTH / BASE_HEIGHT)
 			return BASE_WIDTH;
 
 		return Std.int(Math.min(Math.ceil(BASE_HEIGHT * ratio), BASE_HEIGHT * 2.4));
 	}
 
-	public static function getAspectRatio():Float
+	public static function resizeGame(newWidth:Int)
 	{
-		#if android
-		var method:Dynamic = lime.system.JNI.createStaticMethod('org/haxe/extension/ScreenUtil', 'getAspectRatio', '()F');
-		if (method != null)
-		{
-			var ratio:Float = method();
-			if (ratio > 0)
-				return ratio;
-		}
-		#end
+		if (FlxG.width == newWidth)
+			return;
 
-		var stage = openfl.Lib.current.stage;
-		var width:Float = Math.max(stage.stageWidth, stage.stageHeight);
-		var height:Float = Math.min(stage.stageWidth, stage.stageHeight);
-		return height > 0 ? width / height : BASE_WIDTH / BASE_HEIGHT;
+		var oldWidth:Int = FlxG.width;
+
+		@:privateAccess
+		FlxG.width = newWidth;
+
+		for (camera in FlxG.cameras.list)
+		{
+			if (camera != null && camera.width == oldWidth)
+				camera.setSize(newWidth, camera.height);
+		}
 	}
 
-	public static function apply(full:Bool)
+	public static function apply(wide:Bool)
 	{
+		#if mobile
 		#if android
 		var method:Dynamic = lime.system.JNI.createStaticMethod('org/haxe/extension/ScreenUtil', 'setFullscreen', '(Z)V');
 		if (method != null)
-			method(full);
+			method(wide);
+		#end
+
+		FlxG.scaleMode = new WideScaleMode(wide);
 		#end
 	}
 }

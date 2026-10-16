@@ -2,6 +2,7 @@ package states.options;
 
 import data.ClientPrefs;
 import data.Progression;
+import flixel.FlxG;
 import gameObjects.Option;
 
 class MobileOptionsSubState extends BaseOptionsMenu
@@ -15,7 +16,7 @@ class MobileOptionsSubState extends BaseOptionsMenu
 			'hitboxMode', 'string', 'Four Lanes', ['Four Lanes', 'Arrows']);
 		addOption(option);
 
-		var option:Option = new Option('Screen Style', 'Original keeps the 16:9 screen with black borders.\nFull fills the whole screen without stretching. Restart the game to apply.',
+		var option:Option = new Option('Screen Style', 'Original keeps the 16:9 screen with black borders.\nFull fills the whole screen without stretching.',
 			'screenStyle', 'string', 'Original', ['Original', 'Full']);
 		option.onChange = onChangeScreenStyle;
 		addOption(option);
@@ -39,6 +40,7 @@ class MobileOptionsSubState extends BaseOptionsMenu
 	{
 		ClientPrefs.saveSettings();
 		mobile.ScreenUtil.apply(ClientPrefs.screenStyle == 'Full');
+		FlxG.resetState();
 	}
 
 	function onChangeUnlockAll()

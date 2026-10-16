@@ -38,17 +38,4 @@ public class ScreenUtil {
 			}
 		});
 	}
-
-	public static float getAspectRatio() {
-		Activity activity = Extension.mainActivity;
-		if (activity == null) {
-			return 16f / 9f;
-		}
-
-		android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
-		activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
-		float width = Math.max(metrics.widthPixels, metrics.heightPixels);
-		float height = Math.min(metrics.widthPixels, metrics.heightPixels);
-		return height > 0 ? width / height : 16f / 9f;
-	}
 }
