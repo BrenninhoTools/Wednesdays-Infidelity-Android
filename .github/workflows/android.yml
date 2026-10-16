@@ -88,8 +88,10 @@ jobs:
       - name: Build APK
         run: |
           set -o pipefail
-          haxelib run lime build android -arm64 -release 2>&1 | tee build.log || {
+          haxelib run lime build android -arm64 -release -verbose 2>&1 | tee build.log || {
             grep -iE "error|undefined reference|not found|failed" build.log | tail -40 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Build failed::/'
+            grep -m1 -B2 -A2 "c++-header" build.log | cut -c1-3000 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Failing command::/'
+            grep -iE "NDK|ANDROID_HOST|clang" build.log | head -20 | cut -c1-400 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Toolchain::/'
             exit 1
           }
 
