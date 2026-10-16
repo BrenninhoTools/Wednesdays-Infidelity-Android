@@ -279,7 +279,10 @@ class Paths
 		for (path in candidates)
 		{
 			if (OpenFlAssets.exists(path))
-				return OpenFlAssets.getText(path);
+			{
+				var text:String = OpenFlAssets.getText(path);
+				return text != null ? StringTools.replace(text, String.fromCharCode(0xFEFF), '') : null;
+			}
 		}
 
 		return null;
