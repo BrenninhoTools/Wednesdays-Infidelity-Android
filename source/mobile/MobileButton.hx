@@ -20,7 +20,7 @@ class MobileButton extends FlxSprite
 	{
 		super(x, y);
 
-		frames = Paths.getSparrowAtlas('mobile/' + image, 'shared');
+		frames = Paths.getSparrowAtlas('mobile/' + image, 'shared').addBorder(flixel.math.FlxPoint.weak(1, 1));
 		animation.addByPrefix('tap', prefix, 48, false);
 		animation.play('tap', true);
 		animation.stop();
@@ -124,6 +124,20 @@ class MobileButton extends FlxSprite
 
 		if (!playingTap && exists && isOwnerOnTop() && TouchUtil.tappedOn(this, getCam()))
 			playTap();
+	}
+
+	override function draw()
+	{
+		if (isBackButton && !isOwnerOnTop())
+		{
+			for (button in backButtons)
+			{
+				if (button != this && button.exists && button.isOwnerOnTop())
+					return;
+			}
+		}
+
+		super.draw();
 	}
 
 	public static function anyBackTapped():Bool

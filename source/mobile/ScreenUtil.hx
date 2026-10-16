@@ -38,6 +38,13 @@ class ScreenUtil
 	public static inline var BASE_WIDTH:Int = 1280;
 	public static inline var BASE_HEIGHT:Int = 720;
 
+	public static var offsetX(get, never):Float;
+
+	static function get_offsetX():Float
+	{
+		return FlxG.width > BASE_WIDTH ? (FlxG.width - BASE_WIDTH) / 2 : 0;
+	}
+
 	public static function getGameWidth(wide:Bool, stageWidth:Int, stageHeight:Int):Int
 	{
 		if (!wide || stageWidth <= 0 || stageHeight <= 0)
@@ -75,6 +82,34 @@ class ScreenUtil
 			return;
 
 		fitMembers(state.members);
+
+		if (!(state is states.substates.ResetScoreSubState) && !(state is states.substates.StoryProgress))
+			shiftMembers(state.members, offsetX);
+	}
+
+	static function shiftMembers(members:Array<FlxBasic>, offset:Float)
+	{
+		for (member in members)
+		{
+			if (member == null || !member.exists || member is MobileButton)
+				continue;
+
+			if (member is FlxTypedGroup)
+			{
+				var group:FlxTypedGroup<FlxBasic> = cast member;
+				shiftMembers(group.members, offset);
+			}
+			else if (member is flixel.FlxObject)
+			{
+				var object:flixel.FlxObject = cast member;
+				var left:Float = object.x;
+				var right:Float = object.x + object.width;
+				var centered:Bool = Math.abs(left - (FlxG.width - object.width) / 2) < 2;
+
+				if (!centered && left >= -2 && right <= BASE_WIDTH + 2)
+					object.x += offset;
+			}
+		}
 	}
 
 	static function fitMembers(members:Array<FlxBasic>)
