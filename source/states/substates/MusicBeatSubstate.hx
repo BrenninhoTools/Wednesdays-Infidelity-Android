@@ -46,6 +46,15 @@ class MusicBeatSubstate extends FlxSubState
 		return backButton;
 	}
 
+	override function create()
+	{
+		super.create();
+
+		#if mobile
+		mobile.ScreenUtil.fitBackgrounds(this);
+		#end
+	}
+
 	override function destroy()
 	{
 		if (mobileCamera != null)

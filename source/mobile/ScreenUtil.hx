@@ -1,7 +1,12 @@
 package mobile;
 
+import flixel.FlxBasic;
 import flixel.FlxG;
+import flixel.FlxSprite;
+import flixel.FlxState;
+import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.system.scaleModes.RatioScaleMode;
+import flixel.text.FlxText;
 
 class WideScaleMode extends RatioScaleMode
 {
@@ -59,6 +64,67 @@ class ScreenUtil
 		}
 	}
 
+	static var fitHooked:Bool = false;
+
+	public static function fitBackgrounds(state:FlxState)
+	{
+		if (state == null || FlxG.width <= BASE_WIDTH)
+			return;
+
+		if (state is states.game.PlayState || state is states.substates.GameOverSubstate || state is states.game.CutsceneState)
+			return;
+
+		fitMembers(state.members);
+	}
+
+	static function fitMembers(members:Array<FlxBasic>)
+	{
+		for (member in members)
+		{
+			if (member == null || !member.exists)
+				continue;
+
+			if (member is FlxTypedGroup)
+			{
+				var group:FlxTypedGroup<FlxBasic> = cast member;
+				fitMembers(group.members);
+			}
+			else if (member is FlxSprite && !(member is FlxText) && !(member is MobileButton))
+			{
+				fitSprite(cast member);
+			}
+		}
+	}
+
+	static function fitSprite(sprite:FlxSprite)
+	{
+		if (sprite.width < BASE_WIDTH - 80 || sprite.width >= FlxG.width || sprite.height < BASE_HEIGHT - 80)
+			return;
+
+		if (sprite.x > 80 || sprite.x + sprite.width < BASE_WIDTH - 80)
+			return;
+
+		var factor:Float = FlxG.width / sprite.width;
+		var centerY:Float = sprite.y + sprite.height / 2;
+
+		sprite.scale.set(sprite.scale.x * factor, sprite.scale.y * factor);
+		sprite.updateHitbox();
+		sprite.x = (FlxG.width - sprite.width) / 2;
+		sprite.y = centerY - sprite.height / 2;
+	}
+
+	public static function hookBackgroundFit()
+	{
+		if (fitHooked)
+			return;
+
+		fitHooked = true;
+		FlxG.signals.postStateSwitch.add(function()
+		{
+			fitBackgrounds(FlxG.state);
+		});
+	}
+
 	public static function apply(wide:Bool)
 	{
 		#if mobile
@@ -69,6 +135,7 @@ class ScreenUtil
 		#end
 
 		FlxG.scaleMode = new WideScaleMode(wide);
+		hookBackgroundFit();
 		#end
 	}
 }

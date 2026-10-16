@@ -13,16 +13,19 @@ class MobileButton extends FlxSprite
 	public var isBackButton:Bool = false;
 	public var onTap:Void->Void;
 
-	var animName:String;
+	var playingTap:Bool = false;
+	var fired:Bool = false;
 
 	public function new(x:Float, y:Float, image:String, prefix:String, ?camera:FlxCamera)
 	{
 		super(x, y);
 
 		frames = Paths.getSparrowAtlas('mobile/' + image, 'shared');
-		animation.addByPrefix('tap', prefix, 24, true);
+		animation.addByPrefix('tap', prefix, 48, false);
 		animation.play('tap', true);
-		animName = 'tap';
+		animation.stop();
+		animation.curAnim.curFrame = 0;
+		animation.onFinish.add(onTapFinished);
 		antialiasing = data.ClientPrefs.globalAntialiasing;
 		scrollFactor.set();
 		updateHitbox();
@@ -59,10 +62,11 @@ class MobileButton extends FlxSprite
 
 	function get_tapped():Bool
 	{
-		if (!exists || !active || !isOwnerOnTop())
+		if (!fired)
 			return false;
 
-		return TouchUtil.tappedOn(this, getCam());
+		fired = false;
+		return true;
 	}
 
 	function getCam():FlxCamera
@@ -84,30 +88,50 @@ class MobileButton extends FlxSprite
 
 	public function playTap()
 	{
-		animation.play(animName, true);
+		if (playingTap)
+			return;
+
+		playingTap = true;
+		fired = false;
+
+		if (animation.curAnim == null)
+			onTapFinished('tap');
+		else
+			animation.play('tap', true);
+	}
+
+	function onTapFinished(name:String)
+	{
+		if (!playingTap)
+			return;
+
+		playingTap = false;
+		fired = true;
+
+		if (animation.curAnim != null)
+		{
+			animation.stop();
+			animation.curAnim.curFrame = 0;
+		}
+
+		if (onTap != null)
+			onTap();
 	}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
 
-		if (tapped)
-		{
+		if (!playingTap && exists && isOwnerOnTop() && TouchUtil.tappedOn(this, getCam()))
 			playTap();
-			if (onTap != null)
-				onTap();
-		}
 	}
 
 	public static function anyBackTapped():Bool
 	{
 		for (button in backButtons)
 		{
-			if (button != null && button.tapped)
-			{
-				button.playTap();
+			if (button != null && button.exists && button.isOwnerOnTop() && button.tapped)
 				return true;
-			}
 		}
 
 		return false;
@@ -116,6 +140,7 @@ class MobileButton extends FlxSprite
 	override function destroy()
 	{
 		backButtons.remove(this);
+		animation.onFinish.remove(onTapFinished);
 		owner = null;
 		onTap = null;
 		super.destroy();

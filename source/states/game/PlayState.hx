@@ -4037,13 +4037,7 @@ class PlayState extends MusicBeatState
 			return true;
 		#end
 
-		if (pauseButton != null && pauseButton.tapped)
-		{
-			pauseButton.playTap();
-			return true;
-		}
-
-		return false;
+		return pauseButton != null && pauseButton.tapped;
 	}
 
 	private function onKeyPress(event:KeyboardEvent):Void
