@@ -70,7 +70,7 @@ class TouchUtil
 			var cam:FlxCamera = camera != null ? camera : obj.getDefaultCamera();
 			var view:FlxPoint = pointer.getViewPosition(cam);
 			if (cam is ExtendedCamera)
-				view.x -= cast(cam, ExtendedCamera).sideOffset / cam.zoom;
+				view.x -= cast(cam, ExtendedCamera).sideOffset;
 			var screen:FlxPoint = obj.getScreenPosition(null, cam);
 			var left:Float = screen.x;
 			var top:Float = screen.y;

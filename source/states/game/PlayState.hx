@@ -569,7 +569,7 @@ class PlayState extends MusicBeatState
 
 		// var gameCam:FlxCamera = FlxG.camera;
 		camGame = #if mobile new mobile.WideCamera() #else new FlxCamera() #end;
-		camBars = new FlxCamera();
+		camBars = #if mobile new mobile.ExtendedCamera() #else new FlxCamera() #end;
 		camHUD = #if mobile new mobile.ExtendedCamera() #else new FlxCamera() #end;
 		camOther = #if mobile new mobile.ExtendedCamera() #else new FlxCamera() #end;
 

@@ -47,9 +47,9 @@ class NoteOffsetState extends MusicBeatState
 	override public function create()
 	{
 		// Cameras
-		camGame = new FlxCamera();
-		camHUD = new FlxCamera();
-		camOther = new FlxCamera();
+		camGame = #if mobile new mobile.WideCamera() #else new FlxCamera() #end;
+		camHUD = mobile.ScreenUtil.createCamera();
+		camOther = mobile.ScreenUtil.createCamera();
 		camHUD.bgColor.alpha = 0;
 		camOther.bgColor.alpha = 0;
 
@@ -60,6 +60,9 @@ class NoteOffsetState extends MusicBeatState
 		FlxG.cameras.setDefaultDrawTarget(camGame, true);
 		CustomFadeTransition.nextCamera = camOther;
 		FlxG.camera.scroll.set(120, 130);
+		#if mobile
+		FlxG.camera.scroll.x -= mobile.ScreenUtil.side;
+		#end
 
 		persistentUpdate = true;
 		FlxG.sound.pause();

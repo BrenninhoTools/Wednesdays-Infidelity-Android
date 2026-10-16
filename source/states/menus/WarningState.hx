@@ -60,9 +60,9 @@ class WarningState extends MusicBeatState
 
 		Lib.application.window.title = "Wednesday's Infidelity - WARNING";
 
-		camGame = new FlxCamera();
+		camGame = mobile.ScreenUtil.createCamera();
 
-		camHUD = new FlxCamera();
+		camHUD = mobile.ScreenUtil.createCamera();
 		camHUD.bgColor.alpha = 0;
 
 		FlxG.cameras.reset(camGame);

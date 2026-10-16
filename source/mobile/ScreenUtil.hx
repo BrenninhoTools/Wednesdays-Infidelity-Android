@@ -6,6 +6,7 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.group.FlxSpriteGroup;
 import flixel.system.scaleModes.RatioScaleMode;
 import flixel.text.FlxText;
 
@@ -21,6 +22,7 @@ class ScreenUtil
 
 	static var hooked:Bool = false;
 	static var leftAligned:Map<FlxSprite, String> = new Map<FlxSprite, String>();
+	static var checked:Map<FlxSprite, Bool> = new Map<FlxSprite, Bool>();
 
 	public static function alignLeft(sprite:FlxSprite, imagePath:String)
 	{
@@ -59,67 +61,127 @@ class ScreenUtil
 		return camera;
 	}
 
-	public static function fillBackgrounds(state:FlxState)
+	public static function createCamera():FlxCamera
 	{
-		if (state == null || side <= 0)
+		#if mobile
+		return new ExtendedCamera();
+		#else
+		return new FlxCamera();
+		#end
+	}
+
+	public static function fitScreen(state:FlxState)
+	{
+		if (side <= 0 || state == null || state is states.game.CutsceneState)
 			return;
 
-		if (state is states.game.PlayState || state is states.game.CutsceneState)
-			return;
-
-		var backgrounds:Array<FlxSprite> = [];
-		findBackgrounds(state.members, backgrounds);
-		if (backgrounds.length == 0)
+		var current:FlxState = state;
+		while (current != null)
 		{
-			leftAligned.clear();
-			return;
+			fitMembers(current, current.members);
+			current = current.subState;
 		}
+	}
 
-		var bgCamera:FlxCamera = new FlxCamera();
-		bgCamera.bgColor = 0xFF000000;
-		extendCamera(bgCamera, true);
+	static function fitMembers(state:FlxState, members:Array<FlxBasic>)
+	{
+		if (members == null)
+			return;
 
-		for (camera in FlxG.cameras.list)
-			camera.bgColor.alpha = 0;
-
-		FlxG.cameras.insert(bgCamera, 0, false);
-
-		for (sprite in backgrounds)
+		var i:Int = 0;
+		while (i < members.length)
 		{
-			if (leftAligned.exists(sprite))
+			var member:FlxBasic = members[i];
+			i++;
+
+			if (member == null || !member.exists)
+				continue;
+
+			if (member is FlxTypedGroup)
 			{
-				placeLeftWithMirror(state, sprite, leftAligned.get(sprite), bgCamera);
+				var group:FlxTypedGroup<FlxBasic> = cast member;
+				fitMembers(state, group.members);
 				continue;
 			}
 
-			var centerX:Float = sprite.x + sprite.width / 2;
-			var centerY:Float = sprite.y + sprite.height / 2;
-			var factor:Float = fullWidth / sprite.width;
+			if (!(member is FlxSprite) || member is FlxText || member is MobileButton || member is FlxSpriteGroup || member is gameObjects.Note
+				|| member is gameObjects.StrumNote || member is gameObjects.NoteSplash)
+				continue;
 
-			if (factor > 1)
-			{
-				sprite.scale.set(sprite.scale.x * factor, sprite.scale.y * factor);
-				sprite.updateHitbox();
-			}
+			var sprite:FlxSprite = cast member;
+			if (checked.exists(sprite))
+				continue;
 
-			sprite.scrollFactor.x = 1;
-			sprite.x = centerX - sprite.width / 2;
-			sprite.y = centerY - sprite.height / 2;
-			sprite.cameras = [bgCamera];
+			checked.set(sprite, true);
+			fitSprite(state, sprite);
 		}
-
-		leftAligned.clear();
 	}
 
-	static function placeLeftWithMirror(state:FlxState, sprite:FlxSprite, imagePath:String, bgCamera:FlxCamera)
+	static function isSolid(sprite:FlxSprite):Bool
 	{
-		var extra:Float = side;
+		if (sprite.graphic == null || sprite.graphic.key == null || sprite.shader != null)
+			return false;
 
-		sprite.scrollFactor.x = 1;
-		sprite.x = -extra;
-		sprite.cameras = [bgCamera];
+		return ~/^[0-9]+x[0-9]+:/.match(sprite.graphic.key);
+	}
 
-		var gap:Int = Math.ceil(fullWidth - sprite.width);
+	static function fitSprite(state:FlxState, sprite:FlxSprite)
+	{
+		var cameras = sprite.getCameras();
+		if (cameras == null || cameras.length == 0 || !(cameras[0] is ExtendedCamera))
+			return;
+
+		var camera:ExtendedCamera = cast cameras[0];
+		var extra:Float = camera.sideOffset;
+		if (extra <= 0)
+			return;
+
+		var scroll:Float = camera.scroll.x * sprite.scrollFactor.x;
+		var left:Float = sprite.x - scroll;
+
+		if (sprite.width < FlxG.width - 80 || left > 80 || left + sprite.width < FlxG.width - 80)
+			return;
+
+		var solid:Bool = isSolid(sprite);
+		if (!solid && sprite.height < FlxG.height - 80)
+			return;
+
+		if (leftAligned.exists(sprite))
+		{
+			placeLeftWithMirror(state, sprite, leftAligned.get(sprite), extra, scroll);
+			return;
+		}
+
+		var full:Float = FlxG.width + extra * 2;
+
+		if (sprite.width < full)
+		{
+			var centerX:Float = sprite.x + sprite.width / 2;
+			var centerY:Float = sprite.y + sprite.height / 2;
+			var factor:Float = (full + 2) / sprite.width;
+
+			if (solid)
+				sprite.scale.x *= factor;
+			else
+				sprite.scale.set(sprite.scale.x * factor, sprite.scale.y * factor);
+
+			sprite.updateHitbox();
+			sprite.x = centerX - sprite.width / 2;
+			sprite.y = centerY - sprite.height / 2;
+			left = sprite.x - scroll;
+		}
+
+		var minLeft:Float = FlxG.width + extra - sprite.width;
+		var maxLeft:Float = -extra;
+		var target:Float = Math.max(minLeft, Math.min(maxLeft, left));
+		sprite.x += target - left;
+	}
+
+	static function placeLeftWithMirror(state:FlxState, sprite:FlxSprite, imagePath:String, extra:Float, scroll:Float)
+	{
+		sprite.x = scroll - extra;
+
+		var gap:Int = Math.ceil(FlxG.width + extra * 2 - sprite.width);
 		if (gap <= 0)
 			return;
 
@@ -128,7 +190,7 @@ class ScreenUtil
 			return;
 
 		var scale:Float = sprite.scale.x;
-		var sourceGap:Int = Std.int(Math.min(source.width, Math.ceil(gap / scale)));
+		var sourceGap:Int = Std.int(Math.min(source.width, Math.ceil(gap / scale) + 2));
 		var mirrorData = new openfl.display.BitmapData(sourceGap, source.height, true, 0);
 		mirrorData.draw(source, new openfl.geom.Matrix(-1, 0, 0, 1, source.width, 0));
 
@@ -136,49 +198,14 @@ class ScreenUtil
 		mirror.scale.set(sprite.scale.x, sprite.scale.y);
 		mirror.updateHitbox();
 		mirror.antialiasing = sprite.antialiasing;
-		mirror.scrollFactor.set(1, sprite.scrollFactor.y);
-		mirror.x = sprite.x + sprite.width;
+		mirror.scrollFactor.set(sprite.scrollFactor.x, sprite.scrollFactor.y);
+		mirror.x = sprite.x + sprite.width - 1;
 		mirror.y = sprite.y;
-		mirror.cameras = [bgCamera];
+		mirror.cameras = sprite.cameras;
+		checked.set(mirror, true);
 
 		var index:Int = state.members.indexOf(sprite);
 		state.insert(index < 0 ? 0 : index + 1, mirror);
-	}
-
-	static function findBackgrounds(members:Array<FlxBasic>, result:Array<FlxSprite>)
-	{
-		for (member in members)
-		{
-			if (member == null || !member.exists)
-				continue;
-
-			if (member is FlxTypedGroup)
-			{
-				var group:FlxTypedGroup<FlxBasic> = cast member;
-				findBackgrounds(group.members, result);
-			}
-			else if (member is FlxSprite && !(member is FlxText) && !(member is MobileButton))
-			{
-				var sprite:FlxSprite = cast member;
-				if (isBackground(sprite))
-					result.push(sprite);
-			}
-		}
-	}
-
-	static function isBackground(sprite:FlxSprite):Bool
-	{
-		if (sprite.width < BASE_WIDTH - 80 || sprite.height < BASE_HEIGHT - 80)
-			return false;
-
-		if (sprite.x > 80 || sprite.x + sprite.width < BASE_WIDTH - 80)
-			return false;
-
-		var cameras = sprite.getCameras();
-		if (cameras != null && cameras.length > 0 && cameras[0] != FlxG.cameras.list[0])
-			return false;
-
-		return true;
 	}
 
 	public static function spreadHUD(members:Array<FlxBasic>, camera:FlxCamera)
@@ -239,9 +266,20 @@ class ScreenUtil
 		if (!hooked)
 		{
 			hooked = true;
-			FlxG.signals.postStateSwitch.add(function()
+			FlxG.signals.preStateSwitch.add(function()
 			{
-				fillBackgrounds(FlxG.state);
+				checked.clear();
+				leftAligned.clear();
+			});
+			FlxG.signals.preStateCreate.add(function(state:FlxState)
+			{
+				if (wide && !(state is states.game.PlayState))
+					FlxG.cameras.reset(new ExtendedCamera());
+			});
+			FlxG.signals.postUpdate.add(function()
+			{
+				if (wide)
+					fitScreen(FlxG.state);
 			});
 		}
 		#end
