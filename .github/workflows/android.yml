@@ -32,7 +32,7 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r28c
-          local-cache: true
+          add-to-path: false
 
       - name: Setup Haxe
         uses: krdlab/setup-haxe@v2
@@ -73,7 +73,6 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME
           haxelib run lime config ANDROID_SETUP true
           echo "${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
-          echo "::warning title=NDK clang::$(ls -la ${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin | grep -E ' clang' | tr '\n' '|')"
           haxelib list
 
       - name: Restore Build Cache
@@ -90,11 +89,9 @@ jobs:
       - name: Build APK
         run: |
           set -o pipefail
-          echo "::warning title=Which clang::$(which -a clang++ | tr '\n' '|') PATH=$PATH"
           haxelib run lime build android -arm64 -release -verbose 2>&1 | tee build.log || {
             grep -iE "error|undefined reference|not found|failed" build.log | tail -40 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Build failed::/'
             grep -m1 -B2 -A2 "c++-header" build.log | cut -c1-3000 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Failing command::/'
-            grep -iE "NDK|ANDROID_HOST|clang" build.log | head -20 | cut -c1-400 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Toolchain::/'
             exit 1
           }
 
