@@ -21,6 +21,13 @@ class MobileOptionsSubState extends BaseOptionsMenu
 		option.onChange = onChangeScreenStyle;
 		addOption(option);
 
+		var option:Option = new Option('Touch Cursor', 'If checked, a cartoon glove cursor follows your finger while you touch the screen.', 'touchCursor', 'bool', true);
+		option.onChange = function()
+		{
+			mobile.TouchCursor.enabled = ClientPrefs.touchCursor;
+		};
+		addOption(option);
+
 		var option:Option = new Option('Invisible Hitbox', 'If checked, the hitbox lanes stay invisible while you play.', 'invisibleHitbox', 'bool', false);
 		addOption(option);
 

@@ -50,6 +50,8 @@ class Init extends FlxState
 
 		#if mobile
 		mobile.ScreenUtil.apply(ClientPrefs.screenStyle == 'Full');
+		mobile.TouchCursor.init();
+		mobile.TouchCursor.enabled = ClientPrefs.touchCursor;
 		#end
 
 		Highscore.load();

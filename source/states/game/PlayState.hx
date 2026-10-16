@@ -330,6 +330,7 @@ class PlayState extends MusicBeatState
 	public var camControls:FlxCamera;
 
 	var arrowsMode:Bool = false;
+	var spreadHUDLater:Bool = false;
 	var savedDownScroll:Bool = false;
 	var savedMiddleScroll:Bool = false;
 
@@ -569,8 +570,8 @@ class PlayState extends MusicBeatState
 		// var gameCam:FlxCamera = FlxG.camera;
 		camGame = #if mobile new mobile.WideCamera() #else new FlxCamera() #end;
 		camBars = new FlxCamera();
-		camHUD = new FlxCamera();
-		camOther = new FlxCamera();
+		camHUD = #if mobile new mobile.ExtendedCamera() #else new FlxCamera() #end;
+		camOther = #if mobile new mobile.ExtendedCamera() #else new FlxCamera() #end;
 
 		camBars.bgColor.alpha = 0;
 		camHUD.bgColor.alpha = 0;
@@ -1242,6 +1243,10 @@ class PlayState extends MusicBeatState
 
 		createHUD(hudStyle);
 
+		#if mobile
+		spreadHUDLater = true;
+		#end
+
 		weekMissesTxt = new FlxText(-75, weekMissesBar.y + 18, FlxG.width, "", 20);
 		weekMissesTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		weekMissesTxt.scrollFactor.set();
@@ -1413,6 +1418,11 @@ class PlayState extends MusicBeatState
 		Conductor.safeZoneOffset = (ClientPrefs.safeFrames / 60) * 1000;
 
 		super.create();
+
+		#if mobile
+		if (spreadHUDLater)
+			mobile.ScreenUtil.spreadHUD(members, camHUD);
+		#end
 
 		Paths.clearUnusedMemory();
 		CustomFadeTransition.nextCamera = camOther;
@@ -2192,6 +2202,11 @@ class PlayState extends MusicBeatState
 
 			strumLineNotes.add(babyArrow);
 			babyArrow.postAddedToGroup();
+
+			#if mobile
+			if (!arrowsMode && mobile.ScreenUtil.side > 0)
+				babyArrow.x += player == 1 ? mobile.ScreenUtil.side : -mobile.ScreenUtil.side;
+			#end
 
 			if (arrowsMode)
 			{

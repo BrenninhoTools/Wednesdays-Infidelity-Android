@@ -50,6 +50,7 @@ class ClientPrefs
 	public static var unlockAll:Bool = false;
 	public static var hitboxMode:String = 'Four Lanes';
 	public static var screenStyle:String = 'Original';
+	public static var touchCursor:Bool = true;
 
 	// Every key has two binds, add your key bind down here and then add your control on options/ControlsSubState.hx and Controls.hx
 	public static var keyBinds:Map<String, Array<FlxKey>> = [
@@ -125,6 +126,7 @@ class ClientPrefs
 		FlxG.save.data.unlockAll = unlockAll;
 		FlxG.save.data.hitboxMode = hitboxMode;
 		FlxG.save.data.screenStyle = screenStyle;
+		FlxG.save.data.touchCursor = touchCursor;
 
 		FlxG.save.flush();
 
@@ -323,6 +325,11 @@ class ClientPrefs
 		if (FlxG.save.data.screenStyle != null)
 		{
 			screenStyle = FlxG.save.data.screenStyle;
+		}
+
+		if (FlxG.save.data.touchCursor != null)
+		{
+			touchCursor = FlxG.save.data.touchCursor;
 		}
 
 		if (FlxG.save.data.hudStyle != null)

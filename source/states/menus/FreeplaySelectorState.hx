@@ -82,6 +82,10 @@ class FreeplaySelectorState extends MusicBeatState
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);
 
+		#if mobile
+		mobile.ScreenUtil.alignLeft(bg, Paths.getPath('images/friplay_copia.png', IMAGE));
+		#end
+
 		camFollow = new FlxObject(0, 0, 1, 1);
 		camFollowPos = new FlxObject(0, 0, 1, 1);
 		add(camFollow);
