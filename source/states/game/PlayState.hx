@@ -1377,7 +1377,7 @@ class PlayState extends MusicBeatState
 		#end
 
 		#if mobile
-		hitbox = new mobile.Hitbox(camControls, spaceBar != null);
+		hitbox = new mobile.Hitbox(camControls, Paths.formatToSongPath(SONG.song) == 'unknown-suffering' && !ClientPrefs.nubMode);
 		hitbox.visible = !cpuControlled;
 		add(hitbox);
 
@@ -1385,6 +1385,7 @@ class PlayState extends MusicBeatState
 		if (ClientPrefs.invisiblePauseButton)
 			pauseButton.alpha = 0;
 		add(pauseButton);
+		hitbox.excludeObject = pauseButton;
 		#end
 
 		if (!ClientPrefs.controllerMode)

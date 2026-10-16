@@ -85,6 +85,7 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 	public var lanes:Array<HitboxHint> = [];
 	public var dodgeHint:HitboxHint;
 	public var hitboxCamera:FlxCamera;
+	public var excludeObject:FlxSprite;
 
 	public function new(?camera:FlxCamera, withDodge:Bool = false)
 	{
@@ -94,18 +95,19 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 
 		var invisible:Bool = data.ClientPrefs.invisibleHitbox;
 		var laneWidth:Int = Std.int(FlxG.width / 4);
-		var laneHeight:Int = withDodge ? Std.int(FlxG.height * 0.75) : FlxG.height;
+		var dodgeHeight:Int = withDodge ? Std.int(FlxG.height * 0.25) : 0;
+		var laneHeight:Int = FlxG.height - dodgeHeight;
 
 		for (i in 0...4)
 		{
-			var hint = new HitboxHint(laneWidth * i, 0, laneWidth, laneHeight, LANE_COLORS[i], invisible);
+			var hint = new HitboxHint(laneWidth * i, dodgeHeight, laneWidth, laneHeight, LANE_COLORS[i], invisible);
 			lanes.push(hint);
 			add(hint);
 		}
 
 		if (withDodge)
 		{
-			dodgeHint = new HitboxHint(0, laneHeight, FlxG.width, FlxG.height - laneHeight, DODGE_COLOR, invisible);
+			dodgeHint = new HitboxHint(0, 0, FlxG.width, dodgeHeight, DODGE_COLOR, invisible);
 			add(dodgeHint);
 		}
 
@@ -119,10 +121,12 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 
 	function updateHints()
 	{
+		var blocked:Bool = excludeObject != null && excludeObject.exists && TouchUtil.pressedOn(excludeObject, hitboxCamera);
+
 		for (hint in members)
 		{
 			if (hint != null)
-				hint.setPressed(visible && TouchUtil.pressedOn(hint, hitboxCamera));
+				hint.setPressed(visible && !(blocked && hint == dodgeHint) && TouchUtil.pressedOn(hint, hitboxCamera));
 		}
 	}
 
@@ -156,6 +160,7 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 		lanes = null;
 		dodgeHint = null;
 		hitboxCamera = null;
+		excludeObject = null;
 		super.destroy();
 	}
 }
