@@ -11,6 +11,10 @@ class MobileOptionsSubState extends BaseOptionsMenu
 		title = 'Mobile Options';
 		rpcTitle = 'Mobile Options Menu';
 
+		var option:Option = new Option('Hitbox Mode', 'Four Lanes splits the screen into four touch lanes.\nArrows puts your strums at the bottom and hides the opponent notes.',
+			'hitboxMode', 'string', 'Four Lanes', ['Four Lanes', 'Arrows']);
+		addOption(option);
+
 		var option:Option = new Option('Invisible Hitbox', 'If checked, the hitbox lanes stay invisible while you play.', 'invisibleHitbox', 'bool', false);
 		addOption(option);
 

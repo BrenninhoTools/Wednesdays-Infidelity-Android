@@ -87,6 +87,15 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 	public var hitboxCamera:FlxCamera;
 	public var excludeObject:FlxSprite;
 
+	public static final ARROW_CENTERS:Array<Float> = [0.12, 0.31, 0.69, 0.88];
+
+	public static var arrowsMode(get, never):Bool;
+
+	static function get_arrowsMode():Bool
+	{
+		return data.ClientPrefs.hitboxMode == 'Arrows';
+	}
+
 	public function new(?camera:FlxCamera, withDodge:Bool = false)
 	{
 		super();
@@ -94,15 +103,31 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 		hitboxCamera = camera;
 
 		var invisible:Bool = data.ClientPrefs.invisibleHitbox;
-		var laneWidth:Int = Std.int(FlxG.width / 4);
 		var dodgeHeight:Int = withDodge ? Std.int(FlxG.height * 0.25) : 0;
-		var laneHeight:Int = FlxG.height - dodgeHeight;
 
-		for (i in 0...4)
+		if (arrowsMode)
 		{
-			var hint = new HitboxHint(laneWidth * i, dodgeHeight, laneWidth, laneHeight, LANE_COLORS[i], invisible);
-			lanes.push(hint);
-			add(hint);
+			var top:Int = Std.int(Math.max(dodgeHeight, FlxG.height * 0.45));
+			for (i in 0...4)
+			{
+				var left:Float = i == 0 ? 0 : (ARROW_CENTERS[i - 1] + ARROW_CENTERS[i]) / 2 * FlxG.width;
+				var right:Float = i == 3 ? FlxG.width : (ARROW_CENTERS[i] + ARROW_CENTERS[i + 1]) / 2 * FlxG.width;
+				var hint = new HitboxHint(left, top, Std.int(right - left), FlxG.height - top, LANE_COLORS[i], true);
+				lanes.push(hint);
+				add(hint);
+			}
+		}
+		else
+		{
+			var laneWidth:Int = Std.int(FlxG.width / 4);
+			var laneHeight:Int = FlxG.height - dodgeHeight;
+
+			for (i in 0...4)
+			{
+				var hint = new HitboxHint(laneWidth * i, dodgeHeight, laneWidth, laneHeight, LANE_COLORS[i], invisible);
+				lanes.push(hint);
+				add(hint);
+			}
 		}
 
 		if (withDodge)

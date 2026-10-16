@@ -329,6 +329,10 @@ class PlayState extends MusicBeatState
 	public var pauseButton:mobile.MobileButton;
 	public var camControls:FlxCamera;
 
+	var arrowsMode:Bool = false;
+	var savedDownScroll:Bool = false;
+	var savedMiddleScroll:Bool = false;
+
 	var dodgeTimers = new FlxTimerManager();
 
 	final dodgingInfo:Map<String, Float> = [
@@ -550,6 +554,17 @@ class PlayState extends MusicBeatState
 		hudStyle = ClientPrefs.hudStyle;
 
 		cpuControlled = ClientPrefs.botPlay;
+
+		#if mobile
+		arrowsMode = mobile.Hitbox.arrowsMode;
+		if (arrowsMode)
+		{
+			savedDownScroll = ClientPrefs.downScroll;
+			savedMiddleScroll = ClientPrefs.middleScroll;
+			ClientPrefs.downScroll = true;
+			ClientPrefs.middleScroll = false;
+		}
+		#end
 
 		// var gameCam:FlxCamera = FlxG.camera;
 		camGame = new FlxCamera();
@@ -2161,6 +2176,14 @@ class PlayState extends MusicBeatState
 
 			strumLineNotes.add(babyArrow);
 			babyArrow.postAddedToGroup();
+
+			if (arrowsMode)
+			{
+				if (player == 1)
+					babyArrow.x = FlxG.width * mobile.Hitbox.ARROW_CENTERS[i] - Note.swagWidth / 2;
+				else
+					babyArrow.visible = false;
+			}
 		}
 	}
 
@@ -2761,6 +2784,9 @@ class PlayState extends MusicBeatState
 
 				if (daNote.copyAlpha)
 					daNote.alpha = strumAlpha;
+
+				if (arrowsMode && !daNote.mustPress)
+					daNote.visible = false;
 
 				if (daNote.copyX)
 					daNote.x = strumX + Math.cos(angleDir) * daNote.distance;
@@ -4926,6 +4952,12 @@ class PlayState extends MusicBeatState
 		}
 
 		instance = null;
+
+		if (arrowsMode)
+		{
+			ClientPrefs.downScroll = savedDownScroll;
+			ClientPrefs.middleScroll = savedMiddleScroll;
+		}
 
 		super.destroy();
 	}
