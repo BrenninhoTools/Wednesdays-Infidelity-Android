@@ -37,6 +37,7 @@ class MusicBeatSubstate extends FlxSubState
 		{
 			mobileCamera = new FlxCamera();
 			mobileCamera.bgColor.alpha = 0;
+			mobile.ScreenUtil.extendCamera(mobileCamera);
 			FlxG.cameras.add(mobileCamera, false);
 		}
 
@@ -44,15 +45,6 @@ class MusicBeatSubstate extends FlxSubState
 		add(backButton);
 		#end
 		return backButton;
-	}
-
-	override function create()
-	{
-		super.create();
-
-		#if mobile
-		mobile.ScreenUtil.fitBackgrounds(this);
-		#end
 	}
 
 	override function destroy()

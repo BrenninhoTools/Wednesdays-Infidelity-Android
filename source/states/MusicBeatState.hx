@@ -44,6 +44,7 @@ class MusicBeatState extends FlxUIState
 		{
 			mobileCamera = new FlxCamera();
 			mobileCamera.bgColor.alpha = 0;
+			mobile.ScreenUtil.extendCamera(mobileCamera);
 			FlxG.cameras.add(mobileCamera, false);
 		}
 

@@ -10,7 +10,11 @@ class WideCamera extends FlxCamera
 	public function new()
 	{
 		super();
-		zoomMultiplier = FlxG.width > ScreenUtil.BASE_WIDTH ? FlxG.width / ScreenUtil.BASE_WIDTH : 1;
+		if (ScreenUtil.side > 0)
+		{
+			ScreenUtil.extendCamera(this);
+			zoomMultiplier = ScreenUtil.fullWidth / FlxG.width;
+		}
 	}
 
 	function set_zoomMultiplier(value:Float):Float

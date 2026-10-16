@@ -90,7 +90,7 @@ class WarningState extends MusicBeatState
 						FlxTween.tween(warnTitle, {x: (FlxG.width / 3) - 160, y: 100 - 55, size: 120}, 1.5, {startDelay: 0.1, ease: FlxEase.circInOut});
 
 						FlxTween.tween(warnText, {
-							x: 560 + mobile.ScreenUtil.offsetX,
+							x: 560,
 							y: 230 - 55,
 							size: 30,
 							height: 57,
@@ -157,7 +157,7 @@ class WarningState extends MusicBeatState
 		warnText.cameras = [camHUD];
 		add(warnText);
 
-		var text:FlxText = new FlxText(560 + 700 + mobile.ScreenUtil.offsetX, 400, 700, "", 21);
+		var text:FlxText = new FlxText(560 + 700, 400, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		text.applyMarkup("It is reccomended to check the full $options$ menu.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
 		text.cameras = [camHUD];
@@ -165,7 +165,7 @@ class WarningState extends MusicBeatState
 
 		infoTexts.push(text);
 
-		var text:FlxText = new FlxText(560 + 700 + mobile.ScreenUtil.offsetX, 650, 700, "", 21);
+		var text:FlxText = new FlxText(560 + 700, 650, 700, "", 21);
 		text.setFormat("VCR OSD Mono", 30, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		#if mobile
 		text.applyMarkup("Tap $HERE$ to continue.", [new FlxTextFormatMarkerPair(new FlxTextFormat(FlxColor.YELLOW), "$")]);
@@ -196,7 +196,7 @@ class WarningState extends MusicBeatState
 		optionTitle = new Alphabet(0, 0, "accessibility", true, false, 0, 0.9);
 		optionTitle.isMenuItem = false;
 		optionTitle.alpha = 0.5;
-		optionTitle.x = 50 + mobile.ScreenUtil.offsetX;
+		optionTitle.x = 50;
 		optionTitle.y = -100;
 		optionTitle.cameras = [camGame];
 		add(optionTitle);
@@ -208,7 +208,7 @@ class WarningState extends MusicBeatState
 			optionText.cameras = [camGame];
 
 			optionText.y = 250 + (150 * i);
-			optionText.x = 215 + (30 * i) + mobile.ScreenUtil.offsetX;
+			optionText.x = 215 + (30 * i);
 
 			optionText.x -= 700;
 

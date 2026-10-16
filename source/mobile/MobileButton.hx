@@ -39,7 +39,7 @@ class MobileButton extends FlxSprite
 		var button = new MobileButton(0, 0, 'backButton', 'back', camera);
 		button.scale.set(scale, scale);
 		button.updateHitbox();
-		button.x = FlxG.width - button.width - 20;
+		button.x = ScreenUtil.fullWidth - button.width - 20;
 		button.y = FlxG.height - button.height - 20;
 		button.owner = owner;
 		button.isBackButton = true;
@@ -52,7 +52,7 @@ class MobileButton extends FlxSprite
 		var button = new MobileButton(0, 0, 'pauseButton', 'pause', camera);
 		button.scale.set(scale, scale);
 		button.updateHitbox();
-		button.x = FlxG.width - button.width - 20;
+		button.x = ScreenUtil.fullWidth - button.width - 20;
 		button.y = 20;
 		button.owner = owner;
 		return button;

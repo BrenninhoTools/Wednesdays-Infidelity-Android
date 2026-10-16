@@ -398,7 +398,7 @@ class CreditsState extends MusicBeatState
 				}
 				else
 				{
-					item.x = FlxMath.lerp(item.x, 200 + -40 * Math.abs(item.targetY) + mobile.ScreenUtil.offsetX, lerpVal);
+					item.x = FlxMath.lerp(item.x, 200 + -40 * Math.abs(item.targetY), lerpVal);
 					item.forceX = item.x;
 				}
 			}

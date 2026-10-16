@@ -1,6 +1,7 @@
 package mobile;
 
 import flixel.FlxBasic;
+import flixel.FlxCamera;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
@@ -8,115 +9,91 @@ import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.system.scaleModes.RatioScaleMode;
 import flixel.text.FlxText;
 
-class WideScaleMode extends RatioScaleMode
-{
-	public var wide:Bool;
-
-	var targetWidth:Int = ScreenUtil.BASE_WIDTH;
-
-	public function new(wide:Bool)
-	{
-		super();
-		this.wide = wide;
-	}
-
-	override public function onMeasure(width:Int, height:Int):Void
-	{
-		targetWidth = ScreenUtil.getGameWidth(wide, width, height);
-		ScreenUtil.resizeCameras(targetWidth);
-		super.onMeasure(width, height);
-	}
-
-	override function setGlobalSize(width:Int, height:Int):Void
-	{
-		super.setGlobalSize(targetWidth, height);
-	}
-}
-
 class ScreenUtil
 {
 	public static inline var BASE_WIDTH:Int = 1280;
 	public static inline var BASE_HEIGHT:Int = 720;
 
-	public static var offsetX(get, never):Float;
+	public static var wide(default, null):Bool = false;
 
-	static function get_offsetX():Float
+	public static var side(get, never):Float;
+	public static var fullWidth(get, never):Int;
+
+	static var hooked:Bool = false;
+
+	static function get_side():Float
 	{
-		return FlxG.width > BASE_WIDTH ? (FlxG.width - BASE_WIDTH) / 2 : 0;
+		if (!wide || FlxG.scaleMode == null || FlxG.scaleMode.scale.x <= 0)
+			return 0;
+
+		return Math.max(0, Math.ceil(FlxG.scaleMode.offset.x / FlxG.scaleMode.scale.x));
 	}
 
-	public static function getGameWidth(wide:Bool, stageWidth:Int, stageHeight:Int):Int
+	static function get_fullWidth():Int
 	{
-		if (!wide || stageWidth <= 0 || stageHeight <= 0)
-			return BASE_WIDTH;
-
-		var ratio:Float = Math.max(stageWidth, stageHeight) / Math.min(stageWidth, stageHeight);
-		if (ratio <= BASE_WIDTH / BASE_HEIGHT)
-			return BASE_WIDTH;
-
-		return Std.int(Math.min(Math.ceil(BASE_HEIGHT * ratio), BASE_HEIGHT * 2.4));
+		return Std.int(FlxG.width + side * 2);
 	}
 
-	public static function resizeCameras(newWidth:Int)
+	public static function extendCamera(camera:FlxCamera, keepLayout:Bool = false):FlxCamera
 	{
-		if (FlxG.width == newWidth)
+		if (camera == null)
+			return camera;
+
+		var extra:Float = side;
+		if (extra <= 0)
+			return camera;
+
+		camera.x = -extra;
+		camera.setSize(fullWidth, camera.height);
+
+		if (keepLayout)
+			camera.scroll.x = -extra;
+
+		return camera;
+	}
+
+	public static function fillBackgrounds(state:FlxState)
+	{
+		if (state == null || side <= 0)
 			return;
 
-		var oldWidth:Int = FlxG.width;
+		if (state is states.game.PlayState || state is states.game.CutsceneState)
+			return;
+
+		var backgrounds:Array<FlxSprite> = [];
+		findBackgrounds(state.members, backgrounds);
+		if (backgrounds.length == 0)
+			return;
+
+		var bgCamera:FlxCamera = new FlxCamera();
+		bgCamera.bgColor = 0xFF000000;
+		extendCamera(bgCamera, true);
 
 		for (camera in FlxG.cameras.list)
+			camera.bgColor.alpha = 0;
+
+		FlxG.cameras.insert(bgCamera, 0, false);
+
+		for (sprite in backgrounds)
 		{
-			if (camera != null && camera.width == oldWidth)
-				camera.setSize(newWidth, camera.height);
+			var centerX:Float = sprite.x + sprite.width / 2;
+			var centerY:Float = sprite.y + sprite.height / 2;
+			var factor:Float = fullWidth / sprite.width;
+
+			if (factor > 1)
+			{
+				sprite.scale.set(sprite.scale.x * factor, sprite.scale.y * factor);
+				sprite.updateHitbox();
+			}
+
+			sprite.scrollFactor.x = 1;
+			sprite.x = centerX - sprite.width / 2;
+			sprite.y = centerY - sprite.height / 2;
+			sprite.cameras = [bgCamera];
 		}
 	}
 
-	static var fitHooked:Bool = false;
-
-	public static function fitBackgrounds(state:FlxState)
-	{
-		if (state == null || FlxG.width <= BASE_WIDTH)
-			return;
-
-		if (state is states.game.PlayState || state is states.substates.GameOverSubstate || state is states.game.CutsceneState)
-			return;
-
-		fitMembers(state.members);
-
-		if (!(state is states.substates.ResetScoreSubState) && !(state is states.substates.StoryProgress) && !(state is states.menus.WarningState))
-			shiftMembers(state.members, offsetX);
-	}
-
-	static function shiftMembers(members:Array<FlxBasic>, offset:Float)
-	{
-		for (member in members)
-		{
-			if (member == null || !member.exists || member is MobileButton)
-				continue;
-
-			if (member is FlxTypedGroup)
-			{
-				var group:FlxTypedGroup<FlxBasic> = cast member;
-				shiftMembers(group.members, offset);
-			}
-			else if (member is FlxSprite)
-			{
-				var object:FlxSprite = cast member;
-				var camera = object.getDefaultCamera();
-				if (object.scrollFactor.x != 0 && camera != null && camera.target != null)
-					continue;
-
-				var left:Float = object.x;
-				var right:Float = object.x + object.width;
-				var centered:Bool = Math.abs(left - (FlxG.width - object.width) / 2) < 2;
-
-				if (!centered && left >= -2 && right <= BASE_WIDTH + 2)
-					object.x += offset;
-			}
-		}
-	}
-
-	static function fitMembers(members:Array<FlxBasic>)
+	static function findBackgrounds(members:Array<FlxBasic>, result:Array<FlxSprite>)
 	{
 		for (member in members)
 		{
@@ -126,55 +103,53 @@ class ScreenUtil
 			if (member is FlxTypedGroup)
 			{
 				var group:FlxTypedGroup<FlxBasic> = cast member;
-				fitMembers(group.members);
+				findBackgrounds(group.members, result);
 			}
 			else if (member is FlxSprite && !(member is FlxText) && !(member is MobileButton))
 			{
-				fitSprite(cast member);
+				var sprite:FlxSprite = cast member;
+				if (isBackground(sprite))
+					result.push(sprite);
 			}
 		}
 	}
 
-	static function fitSprite(sprite:FlxSprite)
+	static function isBackground(sprite:FlxSprite):Bool
 	{
-		if (sprite.width < BASE_WIDTH - 80 || sprite.width >= FlxG.width || sprite.height < BASE_HEIGHT - 80)
-			return;
+		if (sprite.width < BASE_WIDTH - 80 || sprite.height < BASE_HEIGHT - 80)
+			return false;
 
 		if (sprite.x > 80 || sprite.x + sprite.width < BASE_WIDTH - 80)
-			return;
+			return false;
 
-		var factor:Float = FlxG.width / sprite.width;
-		var centerY:Float = sprite.y + sprite.height / 2;
+		var cameras = sprite.getCameras();
+		if (cameras != null && cameras.length > 0 && cameras[0] != FlxG.cameras.list[0])
+			return false;
 
-		sprite.scale.set(sprite.scale.x * factor, sprite.scale.y * factor);
-		sprite.updateHitbox();
-		sprite.x = (FlxG.width - sprite.width) / 2;
-		sprite.y = centerY - sprite.height / 2;
+		return true;
 	}
 
-	public static function hookBackgroundFit()
-	{
-		if (fitHooked)
-			return;
-
-		fitHooked = true;
-		FlxG.signals.postStateSwitch.add(function()
-		{
-			fitBackgrounds(FlxG.state);
-		});
-	}
-
-	public static function apply(wide:Bool)
+	public static function apply(isWide:Bool)
 	{
 		#if mobile
+		wide = isWide;
+
 		#if android
 		var method:Dynamic = lime.system.JNI.createStaticMethod('org/haxe/extension/ScreenUtil', 'setFullscreen', '(Z)V');
 		if (method != null)
-			method(wide);
+			method(isWide);
 		#end
 
-		FlxG.scaleMode = new WideScaleMode(wide);
-		hookBackgroundFit();
+		FlxG.scaleMode = new RatioScaleMode();
+
+		if (!hooked)
+		{
+			hooked = true;
+			FlxG.signals.postStateSwitch.add(function()
+			{
+				fillBackgrounds(FlxG.state);
+			});
+		}
 		#end
 	}
 }

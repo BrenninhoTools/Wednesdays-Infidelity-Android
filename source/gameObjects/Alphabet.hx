@@ -400,7 +400,7 @@ class Alphabet extends FlxSpriteGroup
 			if (instaLerp)
 			{
 				y = (FlxMath.remapToRange(targetY, 0, 1, 0, 1.3) * yMult) + (FlxG.height * 0.48) + yAdd;
-				x = (targetY * 20) + 90 + xAdd + mobile.ScreenUtil.offsetX;
+				x = (targetY * 20) + 90 + xAdd;
 			}
 			else
 			{
@@ -414,7 +414,7 @@ class Alphabet extends FlxSpriteGroup
 				}
 				else
 				{
-					x = FlxMath.lerp(x, (targetY * 20) + 90 + xAdd + mobile.ScreenUtil.offsetX, lerpVal);
+					x = FlxMath.lerp(x, (targetY * 20) + 90 + xAdd, lerpVal);
 				}
 			}
 		}

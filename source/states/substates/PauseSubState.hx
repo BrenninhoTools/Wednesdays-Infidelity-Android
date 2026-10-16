@@ -92,7 +92,7 @@ class PauseSubState extends MusicBeatSubstate
 
 		FlxG.sound.list.add(pauseMusic);
 
-		var bg:FlxSprite = new FlxSprite().makeGraphic(FlxG.width, FlxG.height, FlxColor.BLACK);
+		var bg:FlxSprite = new FlxSprite().makeGraphic(mobile.ScreenUtil.fullWidth, FlxG.height, FlxColor.BLACK);
 		bg.alpha = 0;
 		bg.scrollFactor.set();
 		add(bg);
@@ -152,8 +152,25 @@ class PauseSubState extends MusicBeatSubstate
 		add(grpMenuShit);
 
 		regenMenu();
+		#if mobile
+		pauseBgCamera = new FlxCamera();
+		pauseBgCamera.bgColor.alpha = 0;
+		mobile.ScreenUtil.extendCamera(pauseBgCamera);
+		FlxG.cameras.add(pauseBgCamera, false);
+
+		pauseCamera = new FlxCamera();
+		pauseCamera.bgColor.alpha = 0;
+		FlxG.cameras.add(pauseCamera, false);
+
+		cameras = [pauseCamera];
+		bg.cameras = [pauseBgCamera];
+		#else
 		cameras = [FlxG.cameras.list[FlxG.cameras.list.length - 1]];
+		#end
 	}
+
+	var pauseCamera:FlxCamera;
+	var pauseBgCamera:FlxCamera;
 
 	var holdTime:Float = 0;
 
@@ -339,6 +356,14 @@ class PauseSubState extends MusicBeatSubstate
 
 	override function destroy()
 	{
+		for (camera in [pauseCamera, pauseBgCamera])
+		{
+			if (camera != null && FlxG.cameras.list.contains(camera))
+				FlxG.cameras.remove(camera);
+		}
+		pauseCamera = null;
+		pauseBgCamera = null;
+
 		pauseMusic.destroy();
 
 		super.destroy();

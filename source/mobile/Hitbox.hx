@@ -105,14 +105,16 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 
 		var invisible:Bool = data.ClientPrefs.invisibleHitbox;
 		var dodgeHeight:Int = withDodge ? Std.int(FlxG.height * 0.25) : 0;
+		var side:Float = ScreenUtil.side;
+		var fullWidth:Int = ScreenUtil.fullWidth;
 
 		if (arrowsMode)
 		{
 			var top:Int = Std.int(Math.max(dodgeHeight, FlxG.height * 0.45));
 			for (i in 0...4)
 			{
-				var left:Float = i == 0 ? 0 : (ARROW_CENTERS[i - 1] + ARROW_CENTERS[i]) / 2 * FlxG.width;
-				var right:Float = i == 3 ? FlxG.width : (ARROW_CENTERS[i] + ARROW_CENTERS[i + 1]) / 2 * FlxG.width;
+				var left:Float = i == 0 ? 0 : (ARROW_CENTERS[i - 1] + ARROW_CENTERS[i]) / 2 * FlxG.width + side;
+				var right:Float = i == 3 ? fullWidth : (ARROW_CENTERS[i] + ARROW_CENTERS[i + 1]) / 2 * FlxG.width + side;
 				var hint = new HitboxHint(left, top, Std.int(right - left), FlxG.height - top, LANE_COLORS[i], true);
 				lanes.push(hint);
 				add(hint);
@@ -120,7 +122,7 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 		}
 		else
 		{
-			var laneWidth:Int = Std.int(FlxG.width / 4);
+			var laneWidth:Int = Std.int(fullWidth / 4);
 			var laneHeight:Int = FlxG.height - dodgeHeight;
 
 			for (i in 0...4)
@@ -133,7 +135,7 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 
 		if (withDodge)
 		{
-			dodgeHint = new HitboxHint(0, 0, FlxG.width, dodgeHeight, DODGE_COLOR, invisible);
+			dodgeHint = new HitboxHint(0, 0, fullWidth, dodgeHeight, DODGE_COLOR, invisible);
 			add(dodgeHint);
 		}
 

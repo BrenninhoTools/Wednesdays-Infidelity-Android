@@ -584,6 +584,7 @@ class PlayState extends MusicBeatState
 		#if mobile
 		camControls = new FlxCamera();
 		camControls.bgColor.alpha = 0;
+		mobile.ScreenUtil.extendCamera(camControls);
 		FlxG.cameras.add(camControls, false);
 		#end
 		grpNoteSplashes = new FlxTypedGroup<NoteSplash>();
