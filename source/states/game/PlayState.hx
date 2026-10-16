@@ -2061,6 +2061,21 @@ class PlayState extends MusicBeatState
 		// trace(unspawnNotes.length);
 		// playerCounter += 1;
 		unspawnNotes.sort(sortByShit);
+
+		if (arrowsMode)
+		{
+			for (note in unspawnNotes)
+			{
+				if (!note.mustPress)
+					continue;
+
+				note.scale.x *= mobile.Hitbox.ARROW_SCALE;
+				if (!note.isSustainNote)
+					note.scale.y *= mobile.Hitbox.ARROW_SCALE;
+				note.updateHitbox();
+				note.offsetX *= mobile.Hitbox.ARROW_SCALE;
+			}
+		}
 		if (eventNotes.length > 1)
 		{ // No need to sort if there's a single one or none at all
 			eventNotes.sort(sortByTime);
@@ -2180,7 +2195,11 @@ class PlayState extends MusicBeatState
 			if (arrowsMode)
 			{
 				if (player == 1)
-					babyArrow.x = FlxG.width * mobile.Hitbox.ARROW_CENTERS[i] - Note.swagWidth / 2;
+				{
+					babyArrow.scale.set(babyArrow.scale.x * mobile.Hitbox.ARROW_SCALE, babyArrow.scale.y * mobile.Hitbox.ARROW_SCALE);
+					babyArrow.updateHitbox();
+					babyArrow.x = FlxG.width * mobile.Hitbox.ARROW_CENTERS[i] - babyArrow.width / 2;
+				}
 				else
 					babyArrow.visible = false;
 			}

@@ -87,7 +87,8 @@ class Hitbox extends FlxTypedSpriteGroup<HitboxHint>
 	public var hitboxCamera:FlxCamera;
 	public var excludeObject:FlxSprite;
 
-	public static final ARROW_CENTERS:Array<Float> = [0.12, 0.31, 0.69, 0.88];
+	public static final ARROW_CENTERS:Array<Float> = [0.2, 0.35, 0.65, 0.8];
+	public static inline var ARROW_SCALE:Float = 1.25;
 
 	public static var arrowsMode(get, never):Bool;
 
