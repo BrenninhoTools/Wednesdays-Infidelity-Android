@@ -300,7 +300,11 @@ class Paths
 		{
 			if (!currentTrackedAssets.exists(path))
 			{
+				#if mobile
+				var newGraphic:FlxGraphic = FlxG.bitmap.add(uploadToGPU(OpenFlAssets.getBitmapData(path, false)), false, path);
+				#else
 				var newGraphic:FlxGraphic = FlxG.bitmap.add(path, false, path);
+				#end
 				newGraphic.persist = true;
 				currentTrackedAssets.set(path, newGraphic);
 			}
@@ -310,6 +314,42 @@ class Paths
 		trace('oh no its returning null NOOOO $path', currentLevel); // MORE INFO CAUSE IDK WHATS WRONG OTHER WISE
 		return null;
 	}
+
+	#if mobile
+	static var maxTextureSize:Int = -1;
+
+	static function uploadToGPU(bitmap:BitmapData):BitmapData
+	{
+		if (bitmap == null || FlxG.stage.context3D == null)
+			return bitmap;
+
+		if (maxTextureSize < 0)
+			maxTextureSize = Std.int(lime.graphics.opengl.GL.getParameter(lime.graphics.opengl.GL.MAX_TEXTURE_SIZE));
+
+		if (maxTextureSize > 0 && (bitmap.width > maxTextureSize || bitmap.height > maxTextureSize))
+			return bitmap;
+
+		@:privateAccess
+		{
+			if (bitmap.image == null)
+				return bitmap;
+
+			bitmap.lock();
+			if (bitmap.__texture == null)
+			{
+				bitmap.image.premultiplied = true;
+				bitmap.getTexture(FlxG.stage.context3D);
+			}
+			bitmap.getSurface();
+			bitmap.disposeImage();
+			bitmap.image.data = null;
+			bitmap.image = null;
+			bitmap.readable = true;
+		}
+
+		return bitmap;
+	}
+	#end
 
 	public static var currentTrackedSounds:Map<String, Sound> = [];
 
@@ -326,7 +366,7 @@ class Paths
 
 		if (!currentTrackedSounds.exists(assetPath))
 			currentTrackedSounds.set(assetPath, OpenFlAssets.getSound(assetPath));
-		localTrackedAssets.push(key);
+		localTrackedAssets.push(assetPath);
 		return currentTrackedSounds.get(assetPath);
 		#end
 

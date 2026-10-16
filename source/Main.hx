@@ -63,20 +63,9 @@ class Main extends Sprite
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 		}
 
+		mobile.CrashHandler.init();
+
 		setupGame();
-
-		addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, function(error:Dynamic)
-		{
-			@:using(haxe.CallStack)
-			var callStack:Array<Dynamic> = CallStack.callStack();
-
-			for (call in callStack)
-			{
-				trace(call);
-			}
-
-			trace(error.message);
-		});
 
 		addEventListener(Event.ENTER_FRAME, update);
 	}

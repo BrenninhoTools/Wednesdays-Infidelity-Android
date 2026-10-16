@@ -82,13 +82,14 @@ jobs:
             .hxcpp_cache
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: build-android-arm64-${{ github.sha }}
+          key: build-android-arm64-${{ hashFiles('.github/workflows/android.yml') }}-${{ github.sha }}
           restore-keys: |
-            build-android-arm64-
+            build-android-arm64-${{ hashFiles('.github/workflows/android.yml') }}-
 
       - name: Build APK
         run: |
           set -o pipefail
+          find .hxcpp_cache -maxdepth 2 -type d -name "pch*" -exec rm -rf {} + 2>/dev/null || true
           haxelib run lime build android -arm64 -release -verbose 2>&1 | tee build.log || {
             grep -iE "error|undefined reference|not found|failed" build.log | tail -40 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Build failed::/'
             exit 1

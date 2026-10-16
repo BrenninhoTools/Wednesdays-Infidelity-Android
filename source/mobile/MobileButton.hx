@@ -33,7 +33,7 @@ class MobileButton extends FlxSprite
 			cameras = [camera];
 	}
 
-	public static function createBack(owner:FlxState, ?camera:FlxCamera, scale:Float = 0.5):MobileButton
+	public static function createBack(owner:FlxState, ?camera:FlxCamera, scale:Float = 0.8):MobileButton
 	{
 		var button = new MobileButton(0, 0, 'backButton', 'back', camera);
 		button.scale.set(scale, scale);

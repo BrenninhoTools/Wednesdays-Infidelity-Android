@@ -78,6 +78,10 @@
 
 	<haxedef name="message.reporting" value="pretty" />
 
+	<haxedef name="HXCPP_CHECK_POINTER" />
+	<haxedef name="HXCPP_STACK_LINE" />
+	<haxedef name="HXCPP_STACK_TRACE" />
+
 	<config:android target-sdk-version="34" if="android" />
 
 	<certificate path="art/android/wi.keystore" password="wednesdays" alias="wi" alias-password="wednesdays" if="android" unless="debug" />
