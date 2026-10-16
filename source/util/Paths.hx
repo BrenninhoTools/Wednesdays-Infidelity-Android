@@ -265,24 +265,44 @@ class Paths
 		return false;
 	}
 
+	static function atlasText(file:String, ?library:String):String
+	{
+		var candidates:Array<String> = [getPath(file, TEXT, library)];
+		if (library == null)
+		{
+			if (currentLevel != null && currentLevel != 'shared')
+				candidates.push(getLibraryPathForce(file, currentLevel));
+			candidates.push(getLibraryPathForce(file, 'shared'));
+			candidates.push(getPreloadPath(file));
+		}
+
+		for (path in candidates)
+		{
+			if (OpenFlAssets.exists(path))
+				return OpenFlAssets.getText(path);
+		}
+
+		return null;
+	}
+
 	inline static public function getSparrowAtlas(key:String, ?library:String):FlxAtlasFrames
 	{
-		return FlxAtlasFrames.fromSparrow(image(key, library), file('images/$key.xml', library));
+		return FlxAtlasFrames.fromSparrow(image(key, library), atlasText('images/$key.xml', library));
 	}
 
 	inline static public function getXMLAtlas(key:String, ?library:String):FlxAtlasFrames
 	{
-		return FlxAtlasFrames.fromTexturePackerXml(image(key, library), file('images/$key.xml', library));
+		return FlxAtlasFrames.fromTexturePackerXml(image(key, library), atlasText('images/$key.xml', library));
 	}
 
 	inline static public function getPackerAtlas(key:String, ?library:String)
 	{
-		return FlxAtlasFrames.fromSpriteSheetPacker(image(key, library), file('images/$key.txt', library));
+		return FlxAtlasFrames.fromSpriteSheetPacker(image(key, library), atlasText('images/$key.txt', library));
 	}
 
 	inline static public function getJSONAtlas(key:String, ?library:String)
 	{
-		return FlxAtlasFrames.fromTexturePackerJson(image(key, library), file('images/$key.json', library));
+		return FlxAtlasFrames.fromTexturePackerJson(image(key, library), atlasText('images/$key.json', library));
 	}
 
 	inline static public function formatToSongPath(path:String)
