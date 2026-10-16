@@ -16,7 +16,7 @@ jobs:
     env:
       HXCPP_COMPILE_CACHE: ${{ github.workspace }}/.hxcpp_cache
       HXCPP_CACHE_MB: 4000
-      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.parallel=true
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -78,10 +78,7 @@ jobs:
       - name: Restore Build Cache
         uses: actions/cache@v4
         with:
-          path: |
-            .hxcpp_cache
-            ~/.gradle/caches
-            ~/.gradle/wrapper
+          path: .hxcpp_cache
           key: build-android-arm64-${{ hashFiles('.github/workflows/android.yml') }}-${{ github.sha }}
           restore-keys: |
             build-android-arm64-${{ hashFiles('.github/workflows/android.yml') }}-
@@ -90,8 +87,9 @@ jobs:
         run: |
           set -o pipefail
           find .hxcpp_cache -maxdepth 2 -type d -name "pch*" -exec rm -rf {} + 2>/dev/null || true
-          haxelib run lime build android -arm64 -release -verbose 2>&1 | tee build.log || {
-            grep -iE "error|undefined reference|not found|failed" build.log | tail -40 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Build failed::/'
+          haxelib run lime build android -arm64 -release 2>&1 | tee build.log || {
+            grep -vE "Transforming|Downloading|Caching disabled|not found$" build.log | grep -iE -A12 "error|what went wrong|failed|exception" | tail -60 | cut -c1-300 | sed ':a;N;$!ba;s/%/%25/g;s/\n/%0A/g' | sed 's/^/::error title=Build failed::/'
+            echo "::error title=Disk::$(df -h / | tail -1)"
             exit 1
           }
 
